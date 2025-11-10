@@ -1,0 +1,122 @@
+-- @author Junaid Atari <mj.atari@gmail.com>
+-- @copyright 2025 Junaid Atari
+-- @see https://github.com/blacksmoke26
+--
+-- Query to retrieve comprehensive information about foreign key constraints in PostgreSQL.
+-- Returns details including constraint metadata, referenced table information, column defaults,
+-- comments on constraints, columns, and tables.
+--
+-- Columns returned:
+-- - fk_schema: Schema containing the foreign key constraint
+-- - fk_constraint_name: Name of the foreign key constraint
+-- - table_schema: Schema containing the source table
+-- - table_name: Name of the source table
+-- - column_name: Name of the foreign key column
+-- - column_default: Default value of the foreign key column
+-- - referenced_schema: Schema containing the referenced table
+-- - referenced_table: Name of the referenced table
+-- - referenced_column: Name of the referenced column
+-- - constraint_type: Type of constraint (always 'FOREIGN KEY' in this query)
+-- - update_rule: Update rule for the foreign key
+-- - delete_rule: Delete rule for the foreign key
+-- - match_option: Match option for the foreign key
+-- - is_deferrable: Whether the constraint is deferrable
+-- - is_deferred: Whether the constraint is initially deferred
+-- - constraint_comment: Comment on the constraint
+-- - source_column_comment: Comment on the source column
+-- - referenced_column_comment: Comment on the referenced column
+-- - source_table_comment: Comment on the source table
+-- - referenced_table_comment: Comment on the referenced table
+--
+-- The query joins information_schema views with PostgreSQL system catalogs to
+-- provide detailed foreign key information including comments and default values.
+
+SELECT
+  -- Constraint information
+  tc.CONSTRAINT_SCHEMA AS fk_schema,
+  tc.CONSTRAINT_NAME AS fk_constraint_name,
+  tc.table_schema AS table_schema,
+  tc.TABLE_NAME AS TABLE_NAME,
+  kcu.COLUMN_NAME AS COLUMN_NAME,
+  -- Default value of the foreign key column (newly added)
+  pg_get_expr(d.adbin, d.adrelid) AS column_default,
+  -- Referenced table information
+  ccu.table_schema AS referenced_schema,
+  ccu.TABLE_NAME AS referenced_table,
+  ccu.COLUMN_NAME AS referenced_column,
+  -- Constraint metadata
+  tc.constraint_type,
+  rc.update_rule,
+  rc.delete_rule,
+  rc.match_option,
+  -- Comments
+  pgc.condeferrable AS is_deferrable,
+  pgc.condeferred AS is_deferred,
+  pgd.description AS constraint_comment,
+  -- Column comments (source and target)
+  pgd_col_src.description AS source_column_comment,
+  pgd_col_tgt.description AS referenced_column_comment,
+  -- Table comments (source and target)
+  pgd_tbl_src.description AS source_table_comment,
+  pgd_tbl_tgt.description AS referenced_table_comment
+FROM
+  information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu ON tc.CONSTRAINT_CATALOG = kcu.CONSTRAINT_CATALOG
+    AND tc.CONSTRAINT_SCHEMA = kcu.CONSTRAINT_SCHEMA
+    AND tc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME
+    JOIN information_schema.referential_constraints rc ON tc.CONSTRAINT_CATALOG = rc.CONSTRAINT_CATALOG
+    AND tc.CONSTRAINT_SCHEMA = rc.CONSTRAINT_SCHEMA
+    AND tc.CONSTRAINT_NAME = rc.CONSTRAINT_NAME
+    JOIN information_schema.constraint_column_usage ccu ON rc.unique_constraint_catalog = ccu.CONSTRAINT_CATALOG
+    AND rc.unique_constraint_schema = ccu.CONSTRAINT_SCHEMA
+    AND rc.unique_constraint_name = ccu.CONSTRAINT_NAME
+    -- Join with pg_constraint for additional metadata
+    JOIN pg_constraint pgc ON pgc.conname = tc.CONSTRAINT_NAME
+    AND pgc.connamespace = (SELECT OID FROM pg_namespace WHERE nspname = tc.CONSTRAINT_SCHEMA)
+    -- Join to get default value
+    JOIN pg_namespace n_src ON n_src.nspname = tc.table_schema
+    JOIN pg_class c_src ON c_src.relname = tc.TABLE_NAME AND c_src.relnamespace = n_src.OID
+    JOIN pg_attribute a_src ON a_src.attrelid = c_src.OID AND a_src.attname = kcu.COLUMN_NAME
+    LEFT JOIN pg_attrdef d ON d.adrelid = a_src.attrelid AND d.adnum = a_src.attnum
+    -- Join for constraint comment
+    LEFT JOIN pg_description pgd ON pgd.objoid = pgc.OID
+    -- Join for source column comment
+    LEFT JOIN pg_description pgd_col_src ON pgd_col_src.objoid = (
+    SELECT attrelid
+    FROM pg_attribute
+    WHERE attrelid = (SELECT OID FROM pg_class WHERE relname = tc.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = tc.table_schema))
+      AND attname = kcu.COLUMN_NAME
+  )
+    AND pgd_col_src.objsubid = (
+      SELECT attnum
+      FROM pg_attribute
+      WHERE attrelid = (SELECT OID FROM pg_class WHERE relname = tc.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = tc.table_schema))
+        AND attname = kcu.COLUMN_NAME
+    )
+    -- Join for referenced column comment
+    LEFT JOIN pg_description pgd_col_tgt ON pgd_col_tgt.objoid = (
+    SELECT attrelid
+    FROM pg_attribute
+    WHERE attrelid = (SELECT OID FROM pg_class WHERE relname = ccu.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = ccu.table_schema))
+      AND attname = ccu.COLUMN_NAME
+  )
+    AND pgd_col_tgt.objsubid = (
+      SELECT attnum
+      FROM pg_attribute
+      WHERE attrelid = (SELECT OID FROM pg_class WHERE relname = ccu.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = ccu.table_schema))
+        AND attname = ccu.COLUMN_NAME
+    )
+    -- Join for source table comment
+    LEFT JOIN pg_description pgd_tbl_src ON pgd_tbl_src.objoid = (SELECT OID FROM pg_class WHERE relname = tc.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = tc.table_schema))
+    AND pgd_tbl_src.objsubid = 0
+    -- Join for referenced table comment
+    LEFT JOIN pg_description pgd_tbl_tgt ON pgd_tbl_tgt.objoid = (SELECT OID FROM pg_class WHERE relname = ccu.TABLE_NAME AND relnamespace = (SELECT OID FROM pg_namespace WHERE nspname = ccu.table_schema))
+    AND pgd_tbl_tgt.objsubid = 0
+WHERE
+  tc.constraint_type = 'FOREIGN KEY'
+  AND a_src.attnum > 0
+  AND NOT a_src.attisdropped
+ORDER BY
+  tc.table_schema,
+  tc.TABLE_NAME,
+  kcu.ordinal_position;

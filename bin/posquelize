@@ -1,0 +1,153 @@
+#!/usr/bin/env node
+
+/**
+ * CLI interface for the Posquelize Generator.
+ *
+ * This script provides a command-line interface for generating Sequelize models
+ * from a PostgreSQL database schema. It supports various configuration options
+ * for customizing the generation process.
+ */
+
+const path = require('node:path');
+const fs = require('node:fs');
+const figlet = require('figlet');
+const readline = require('readline');
+const yargs = require('yargs');
+const { hideBin } = require('yargs/helpers');
+
+// classes
+const { PosquelizeGenerator } = require('../index');
+
+/**
+ * Command line arguments configuration using yargs
+ */
+const argv = yargs(hideBin(process.argv))
+  .parserConfiguration({
+    'parse-numbers': false // disabled because of password field, other option can still be explicitly defined as number type
+  })
+  .usage(
+    'Usage: posquelize -h <host> -d <database> -u <user> -x [password] -p [port] -o [/path/to/myapp] -t [tableName]'
+  )
+  .option('host', {
+    description: 'IP/Hostname for the database.',
+    type: 'string',
+    alias: 'h',
+  })
+  .option('database', {
+    description: 'Database name.',
+    type: 'string',
+    alias: 'd',
+    demandOption: true
+  })
+  .option('user', {
+    description: 'Username for database.',
+    type: 'string',
+    alias: 'u',
+    demandOption: true
+  })
+  .option('pass', {
+    description: 'Password for database. If specified without providing a password, it will be requested interactively from the terminal.',
+    alias: 'x',
+    demandOption: true
+  })
+  .option('port', {
+    description: 'Port number for database',
+    type: 'number',
+    alias: 'p'
+  })
+  .option('output', {
+    description: 'What directory to place the models.',
+    type: 'string',
+    alias: 'o'
+  })
+  .option('clean', {
+    description: 'Clean/Remove the output directory before generation',
+    type: 'boolean',
+  })
+  .option('dirname', {
+    description: 'Sequelize directory name under `/src` directory.',
+    type: 'string',
+    alias: 'n'
+  })
+  .option('schemas', {
+    description: 'Schemas name to be included only (separated by commas)',
+    type: 'string',
+  })
+  .option('tables', {
+    description: 'Tables name to be included only (separated by commas)',
+    type: 'string',
+  })
+  .default({
+    host: 'localhost',
+    port: 5432,
+    clean: false,
+    dirname: 'database',
+  })
+  .parse();
+
+/**
+ * Reads password from stdin without echoing the characters
+ * @returns {Promise<string>} The password entered by the user
+ */
+async function readPassword () {
+  let rl = readline.createInterface({
+    input: process.stdin,
+    terminal: true
+  });
+
+  process.stdout.write('Password: ');
+  let pwd = await new Promise(resolve => rl.question('', pwd => resolve(pwd)));
+  rl.close();
+  process.stdout.write('\n');
+
+  return pwd;
+}
+
+/**
+ * Main execution function
+ */
+(async function () {
+  let password;
+  if (typeof argv.pass === 'boolean' && argv.pass) {
+    password = await readPassword();
+  } else if (typeof argv.pass === 'string') {
+    console.warn('Warning: using a password on the command line interface can be insecure.');
+    password = argv.pass;
+  }
+
+  const dir = !argv.noWrite && (argv.output || path.resolve(process.cwd() + '/myapp'));
+
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+  } catch {
+    // do nothing
+  }
+
+  /** @type {import('../types').GeneratorOptions}  */
+  const config = {
+    cleanRootDir: argv.clean,
+    dirname: argv.dirname,
+    schemas: String(argv.schemas || '').split(',').filter(Boolean),
+    tables: String(argv.tables || '').split(',').filter(Boolean),
+  };
+
+  const connectionString = `postgresql://${argv.user}:${password}@${argv.host}:${argv.port}/${argv.database}`;
+
+
+  console.log(await figlet.text('Posquelize Generator', { font: 'Slant' }));
+
+  const generator = new PosquelizeGenerator(connectionString, dir, config);
+  await generator.generate();
+
+  process.exit(1);
+
+}()).catch(err => {
+  if (err.stack) {
+    console.error(err.stack);
+  } else if (err.message) {
+    console.error(err.message);
+  } else {
+    console.error(err);
+  }
+  process.exitCode = 1;
+});

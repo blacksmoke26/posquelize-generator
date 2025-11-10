@@ -1,0 +1,38 @@
+import { Sequelize, type Options } from 'sequelize';
+
+// config
+import configs from '~/{{ dirname }}/config/config';
+
+export type SequelizeInstance = InstanceType<typeof Sequelize>;
+
+const env = process?.env?.NODE_ENV ?? 'development'
+const config = (configs as {[key: string]: Options})[env]
+
+let sequelizeInstance: SequelizeInstance;
+
+/**
+ * Initialise a new sequelize instance
+ * @param [options] - Server options
+ */
+export const newInstance = (options: Partial<Options> = {}): SequelizeInstance => {
+  const instance = new Sequelize({
+    ...config,
+    dialect: 'postgres',
+    logging: console.log,
+    ...options,
+  });
+
+  // Run a query to set default timezone
+  instance.query(`SET timezone = "+00:00"`);
+
+  return instance;
+};
+
+/**
+ * Get current sequelize instance
+ */
+export const getInstance = (): SequelizeInstance => {
+  return sequelizeInstance
+    ? sequelizeInstance
+    : (sequelizeInstance = newInstance());
+};
