@@ -9,8 +9,6 @@
  * relationships, and configurations.
  */
 
-import 'dotenv/config';
-
 // clients
 import { PosquelizeGenerator } from '../src/index';
 
