@@ -4,8 +4,6 @@
  * @see https://github.com/blacksmoke26
  */
 
-import { format } from 'prettier';
-
 /**
  * A utility class to convert a JSON object into a TypeScript interface string.
  *
@@ -69,13 +67,12 @@ export class JsonToTsConverter {
    *     city: "New York"
    *   }
    * };
-   * const tsInterface = await JsonToTsConverter.convert(json, "Person");
+   * const tsInterface = JsonToTsConverter.convert(json, "Person");
    * console.log(tsInterface);
    * ```
    */
-  public static async convert(jsonData: unknown, rootType: string = 'RootObject'): Promise<string> {
-    const source = new JsonToTsConverter().convertJson(jsonData, rootType);
-    return format(source, { parser: 'typescript' });
+  public static  convert(jsonData: unknown, rootType: string = 'RootObject'): string {
+    return new JsonToTsConverter().convertJson(jsonData, rootType);
   }
 
   /**
@@ -91,7 +88,7 @@ export class JsonToTsConverter {
    */
   private convertJson(jsonData: unknown, rootInterfaceName: string): string {
     if (typeof jsonData !== 'object' || jsonData === null) {
-      return `interface ${rootInterfaceName} {}`;
+      return `interface ${rootInterfaceName} {\n  [p: string]: unknown;\n}`;
     }
 
     this.interfaces.clear();
@@ -140,7 +137,7 @@ export class JsonToTsConverter {
       interfaceBody += `  ${key}: ${type};\n`;
     }
 
-    const fullInterface = `interface ${interfaceName} {\n${interfaceBody.trim()}\n}`;
+    const fullInterface = `interface ${interfaceName} {\n${interfaceBody.trimEnd()}\n}`;
     this.interfaces.set(interfaceName, fullInterface);
   }
 

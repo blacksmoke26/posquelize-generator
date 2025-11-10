@@ -4,8 +4,6 @@
  * @see https://github.com/blacksmoke26
  */
 
-import { format } from 'prettier';
-
 /**
  * A utility class to convert a JSON object into a single, flattened TypeScript interface.
  * Nested objects are inlined into the main interface definition.
@@ -67,7 +65,7 @@ export class JsonToFlattenedTsConverter {
    *   user: { id: 1, name: "John" },
    *   posts: [{ title: "Hello", content: "World" }]
    * };
-   * const interfaceString = await JsonToFlattenedTsConverter.convert(jsonData, "UserData");
+   * const interfaceString = JsonToFlattenedTsConverter.convert(jsonData, "UserData");
    * console.log(interfaceString);
    * // Output:
    * // export interface UserData {
@@ -82,9 +80,8 @@ export class JsonToFlattenedTsConverter {
    * // }
    * ```
    */
-  public static async convert(jsonData: unknown, interfaceName: string = 'RootObject'): Promise<string> {
-    const source = new JsonToFlattenedTsConverter().convertJson(jsonData, interfaceName);
-    return format(source, { parser: 'typescript' });
+  public static convert(jsonData: unknown, interfaceName: string = 'RootObject'): string {
+    return new JsonToFlattenedTsConverter().convertJson(jsonData, interfaceName);
   }
 
   /**
@@ -130,7 +127,7 @@ export class JsonToFlattenedTsConverter {
         return '{}'; // Or a more specific empty array type if desired
       }
       // Use the first element's type as the representative for the whole array
-      const elementType = this.getType(obj[0], indentLevel + 1);
+      const elementType = this.getType(obj[0], indentLevel);
       return `${elementType}[]`;
     }
 
@@ -167,7 +164,7 @@ export class JsonToFlattenedTsConverter {
     }
 
     // Return the inlined object definition
-    return `{\n${' '.repeat(indentLevel * 3)}${body.trim()}\n${indent}}`;
+    return `{\n${body.trimEnd()}\n${indent}}`;
   }
 
   /**
