@@ -60,41 +60,41 @@ export interface GeneratorOptions {
    * Whether to clean the root directory before generation
    * @default false
    */
-   cleanRootDir?: boolean;
+  cleanRootDir?: boolean;
 
-   /**
-    * Whether to generate migration files for the database schema.
-    * When enabled, creates Knex.js migration scripts that can recreate the database structure
-    * including tables, columns, indexes, and foreign key constraints.
-    *
-    * Migration files are generated in the migrations subdirectory of the base output directory
-    * and follow the standard Knex.js migration format.
-    *
-    * @default true
-    * @example
-    * ```typescript
-    * // Disable migration generation
-    * { migrations: false }
-    * ```
-    */
-   migrations?: boolean;
+  /**
+   * Whether to generate migration files for the database schema.
+   * When enabled, creates Knex.js migration scripts that can recreate the database structure
+   * including tables, columns, indexes, and foreign key constraints.
+   *
+   * Migration files are generated in the migrations subdirectory of the base output directory
+   * and follow the standard Knex.js migration format.
+   *
+   * @default true
+   * @example
+   * ```typescript
+   * // Disable migration generation
+   * { migrations: false }
+   * ```
+   */
+  migrations?: boolean;
 
-   /**
-    * Whether to generate Entity Relationship Diagram (ERD) files for the database schema.
-    * When enabled, creates visual representations of the database structure including
-    * tables, relationships, constraints, and schema metadata.
-    *
-    * Diagram files are generated in the diagrams subdirectory of the base output directory
-    * and can be used for documentation and database visualization purposes.
-    *
-    * @default true
-    * @example
-    * ```typescript
-    * // Disable diagram generation
-    * { diagram: false }
-    * ```
-    */
-   diagram?: boolean;
+  /**
+   * Whether to generate Entity Relationship Diagram (ERD) files for the database schema.
+   * When enabled, creates visual representations of the database structure including
+   * tables, relationships, constraints, and schema metadata.
+   *
+   * Diagram files are generated in the diagrams subdirectory of the base output directory
+   * and can be used for documentation and database visualization purposes.
+   *
+   * @default true
+   * @example
+   * ```typescript
+   * // Disable diagram generation
+   * { diagram: false }
+   * ```
+   */
+  diagram?: boolean;
 }
 
 /**
