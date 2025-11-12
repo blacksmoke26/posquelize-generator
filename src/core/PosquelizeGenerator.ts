@@ -14,7 +14,6 @@
  */
 
 import fs from 'node:fs';
-import path from 'node:path';
 
 import merge from 'deepmerge';
 import { rimraf } from 'rimraf';
@@ -38,78 +37,7 @@ import ModelGenerator, { InitTemplateVars, ModelTemplateVars, sp } from './Model
 // types
 import type { Knex } from 'knex';
 import type { ForeignKey, Relationship, TableIndex } from '~/typings/utils';
-
-/**
- * Configuration options for the generator
- */
-export interface GeneratorOptions {
-  /**
-   * The directory name where generated files will be placed
-   * @default 'database'
-   */
-  dirname?: string;
-  /**
-   * List of schemas to generate models for
-   */
-  schemas?: string[];
-  /**
-   * List of tables to generate models for
-   */
-  tables?: string[];
-  /**
-   * Whether to clean the root directory before generation
-   * @default false
-   */
-  cleanRootDir?: boolean;
-
-  /**
-   * Controls the generation of database migration files. When enabled, creates
-   * migration scripts that can recreate the database schema in another environment.
-   *
-   * The migration files include:
-   * - Table creation statements with all columns and constraints
-   * - Index definitions (unique, primary, and regular indexes)
-   * - Foreign key constraints and relationships
-   * - Schema-specific considerations and naming conventions
-   *
-   * Set false to disable migration generation entirely. When truthy, accepts
-   * configuration options from MigrationOptions['generate'] to customize the
-   * migration generation behavior.
-   *
-   * Migration files are generated in the migrations subdirectory of the base
-   * output directory and follow the Knex migration format with up() and down()
-   * methods for rollback support.
-   *
-   * @default true
-   * @example
-   * ```typescript
-   * // Disable migrations
-   * { migrations: false }
-   *
-   * // Enable with custom options
-   * { migrations: { indexes: true, foreignKeys: true } }
-   * ```
-   * @see MigrationGenerator For the underlying migration generation implementation
-   */
-  migrations?: MigrationOptions['generate'] | false;
-
-  /**
-   * Whether to generate Entity Relationship Diagram (ERD) files for the database schema.
-   * When enabled, creates visual representations of the database structure including
-   * tables, relationships, constraints, and schema metadata.
-   *
-   * Diagram files are generated in the diagrams subdirectory of the base output directory
-   * and can be used for documentation and database visualization purposes.
-   *
-   * @default true
-   * @example
-   * ```typescript
-   * // Disable diagram generation
-   * { diagram: false }
-   * ```
-   */
-  diagram?: boolean;
-}
+import type { GeneratorOptions } from '~/typings/generator';
 
 /**
  * Generates Sequelize models, migrations, and related files from a database schema.
@@ -129,6 +57,21 @@ export interface GeneratorOptions {
  * ```
  */
 export default class PosquelizeGenerator {
+  /**
+   * The Knex.js database client instance used for all database operations.
+   * This client is created during initialization and used throughout the generation
+   * process for schema introspection, table queries, and metadata extraction.
+   * 
+   * The client is configured using the provided connection string and supports
+   * all database operations needed for model generation, including:
+   * - Schema information retrieval
+   * - Table structure analysis
+   * - Index and foreign key inspection
+   * - Relationship discovery
+   * 
+   * @see KnexClient.create() for the client creation logic
+   * @see Database connection is established in the constructor
+   */
   public knex: Knex;
 
   /**
@@ -174,6 +117,7 @@ export default class PosquelizeGenerator {
         cleanRootDir: false,
         diagram: true,
         migrations: true,
+        repositories: true,
       },
       this.options,
     );
@@ -361,7 +305,9 @@ export default class PosquelizeGenerator {
     this.writeModelFile(modelName, modTplVars);
     this.updateConfig(config, modelName);
 
-    TemplateWriter.writeRepoFile(this.getBaseDir(), StringHelper.tableToModel(tableName), this.getOptions().dirname);
+    if ( this.getOptions().repositories ) {
+      TemplateWriter.writeRepoFile(this.getBaseDir(), StringHelper.tableToModel(tableName), this.getOptions().dirname);
+    }
   }
 
   /**
@@ -537,7 +483,9 @@ export default class PosquelizeGenerator {
     } = {anyModelName: ''};
 
     // Write base template files
-    TemplateWriter.writeBaseFiles(this.getBaseDir(), this.getOptions().dirname, this.connectionString);
+    TemplateWriter.writeBaseFiles(this.getBaseDir(), this.getOptions().dirname, this.connectionString, {
+      repoBase: this.getOptions().repositories,
+    });
 
     // Initialize template variables for models and interfaces
     const initTplVars = ModelGenerator.getInitializerTemplateVars();
