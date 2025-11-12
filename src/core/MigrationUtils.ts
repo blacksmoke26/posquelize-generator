@@ -214,7 +214,7 @@ export default abstract class MigrationUtils {
    * ```
    */
   public static async generateFunctions(knex: Knex, schemas: readonly string[], config: MigrationConfig): Promise<void> {
-    const list = await DbMigrator.getFunctions(knex);
+    const list = await DbMigrator.getFunctions(knex, schemas);
 
     for (const data of list) {
       const sql = MigrationUtils.processSQLDefinition(data.definition, schemas);
@@ -240,7 +240,7 @@ export default abstract class MigrationUtils {
    * ```
    */
   public static async generateDomains(knex: Knex, schemas: readonly string[], config: MigrationConfig): Promise<void> {
-    const list = await DbMigrator.getDomains(knex);
+    const list = await DbMigrator.getDomains(knex, schemas);
 
     for (const data of list) {
       const sql = MigrationUtils.processSQLDefinition(data.definition, schemas);
@@ -289,7 +289,7 @@ export default abstract class MigrationUtils {
    * ```
    */
   public static async generateTriggers(knex: Knex, schemas: readonly string[], config: MigrationConfig): Promise<void> {
-    const list = await DbMigrator.getTriggers(knex);
+    const list = await DbMigrator.getTriggers(knex, schemas);
 
     for (const data of list) {
       const sql = MigrationUtils.processSQLDefinition(data.definition, schemas);
@@ -315,7 +315,7 @@ export default abstract class MigrationUtils {
    * ```
    */
   public static async generateComposites(knex: Knex, schemas: readonly string[], config: MigrationConfig): Promise<void> {
-    const list = await DbMigrator.getComposites(knex);
+    const list = await DbMigrator.getComposites(knex, schemas);
 
     for (const data of list) {
       const sql = MigrationUtils.processSQLDefinition(data.definition, schemas);
@@ -341,7 +341,7 @@ export default abstract class MigrationUtils {
    * ```
    */
   public static async generateViews(knex: Knex, schemas: readonly string[], config: MigrationConfig): Promise<void> {
-    const list = await DbMigrator.getViews(knex);
+    const list = await DbMigrator.getViews(knex, schemas);
 
     for (const data of list) {
       const sql = MigrationUtils.processSQLDefinition(data.definition, schemas);

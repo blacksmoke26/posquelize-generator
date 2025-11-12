@@ -77,11 +77,25 @@ const argv = yargs(hideBin(process.argv))
     description: 'Tables name to be included only (separated by commas)',
     type: 'string',
   })
+  .option('no-diagram', {
+    description: 'Do not generate ER diagram of the database.',
+    type: 'boolean',
+  })
+  .option('no-migrations', {
+    description: 'Do not generate the migration files.',
+    type: 'boolean',
+  })
+  .option('no-repositories', {
+    description: 'Do not generate the repository files.',
+    type: 'boolean',
+  })
   .default({
     host: 'localhost',
     port: 5432,
     clean: false,
     dirname: 'database',
+    'no-diagram': false,
+    'no-migrations': false,
   })
   .parse();
 
@@ -123,7 +137,7 @@ async function readPassword () {
     // do nothing
   }
 
-  /** @type {import('../types').GeneratorOptions}  */
+  /** @type {import('../index').GeneratorOptions}  */
   const config = {
     cleanRootDir: argv.clean,
     dirname: argv.dirname,
@@ -131,8 +145,19 @@ async function readPassword () {
     tables: String(argv.tables || '').split(',').filter(Boolean),
   };
 
-  const connectionString = `postgresql://${argv.user}:${password}@${argv.host}:${argv.port}/${argv.database}`;
+  if ( argv['no-diagram'] ) {
+    config.diagram = false
+  }
 
+  if ( argv['no-migrations'] ) {
+    config.migrations = false
+  }
+
+  if ( argv['no-repositories'] ) {
+    config.repositories = false
+  }
+
+  const connectionString = `postgresql://${argv.user}:${password}@${argv.host}:${argv.port}/${argv.database}`;
 
   console.log(await figlet.text('Posquelize Generator', { font: 'Slant' }));
 

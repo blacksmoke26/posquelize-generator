@@ -4,6 +4,8 @@
  * @see https://github.com/blacksmoke26
  */
 
+import merge from 'deepmerge';
+
 // helpers
 import FileHelper from '~/helpers/FileHelper';
 import NunjucksHelper from '~/helpers/NunjucksHelper';
@@ -11,6 +13,19 @@ import NunjucksHelper from '~/helpers/NunjucksHelper';
 // classes
 import KnexClient from '~/classes/KnexClient';
 import DbmlDiagramExporter from './DbmlDiagramExporter';
+
+/**
+ * Options for configuring the behavior of writing base files during scaffold generation.
+ * These options control which components are generated and how they are structured.
+ */
+export interface WriteBaseFileOptions {
+  /**
+   * Whether to generate the base repo file (RepoBase.ts).
+   * When true, the RepoBase.ts file will be created in the base directory.
+   * @default true
+   */
+  repoBase?: boolean;
+}
 
 /**
  * Abstract class for scaffold generation utilities.
@@ -48,17 +63,40 @@ export default abstract class TemplateWriter {
 
   /**
    * Writes base files required for the scaffold generation.
+   *
+   * This method generates essential base files for a project scaffold, including:
+   * - ModelBase.ts (if repoBase option is enabled)
+   * - RepositoryBase.ts
+   * - instance.ts
+   * - Configuration files (config.js, .env, tsconfig.json, .sequelizerc)
+   * - Project setup files (package.json, .gitignore, README.md)
+   *
    * @param {string} baseDir - The base directory path where the repositories folder is located.
-   * @param {string} mainDir - The main directory name files placed in.
-   * @param {string} connectionString The database connection string
-   * This includes ModelBase, RepositoryBase, configuration, and instance files.
+   * @param {string} mainDir - The main directory name where files will be placed.
+   * @param {string} connectionString - The database connection string used for configuration.
+   * @param {WriteBaseFileOptions} options - Optional configuration for controlling which files are generated.
+   *   @property {boolean} [repoBase=true] - Whether to generate the RepoBase.ts file.
+   *
+   * @example
+   * // Basic usage with default options
+   * TemplateWriter.writeBaseFiles('/path/to/project', 'src', 'postgresql://user:pass@localhost:5432/db');
+   *
+   * @example
+   * // Custom options
+   * TemplateWriter.writeBaseFiles('/path/to/project', 'src', 'postgresql://user:pass@localhost:5432/db', {
+   *   repoBase: false
+   * });
    */
-  public static writeBaseFiles(baseDir: string, mainDir: string, connectionString: string): void {
+  public static writeBaseFiles(baseDir: string, mainDir: string, connectionString: string, options: WriteBaseFileOptions = {}): void {
+    const newOptions = merge<Required<WriteBaseFileOptions>>({ repoBase: true }, options);
+
+    if (newOptions.repoBase) {
+      // Generate RepositoryBase.ts from template
+      this.renderOut('repo-base', FileHelper.join(baseDir, 'base/RepositoryBase.ts'));
+    }
+
     // Generate ModelBase.ts from template
     this.renderOut('model-base', FileHelper.join(baseDir, 'base/ModelBase.ts'));
-
-    // Generate RepositoryBase.ts from template
-    this.renderOut('repo-base', FileHelper.join(baseDir, 'base/RepositoryBase.ts'));
 
     // Generate instance.ts from template
     this.renderOut('instance-template', FileHelper.join(baseDir, 'instance.ts'), {dirname: mainDir});

@@ -69,29 +69,6 @@ export enum RelationshipType {
  */
 export default abstract class DbUtils {
   /**
-   * Retrieves a list of system schema names from the PostgreSQL database.
-   * System schemas are those owned by the current database user and typically
-   * contain system-level objects and metadata.
-   *
-   * @param {Knex} knex - Knex instance configured for database connection
-   * @returns {Promise<string[]>} Promise resolving to an array of system schema names
-   *
-   * @example
-   * ```typescript
-   * const schemas = await DbUtils.getSystemSchemas(knex);
-   * console.log('System schemas:', schemas);
-   * ```
-   */
-  public static async getSystemSchemas(knex: Knex): Promise<string[]> {
-    const predefined: Awaited<{ nspname: string }[]> = await knex
-      .select('nspname')
-      .from('pg_namespace')
-      .whereRaw('nspowner = CURRENT_USER::REGROLE');
-
-    return predefined.map((x) => x.nspname);
-  }
-
-  /**
    * Retrieves a list of user-defined schema names from the database.
    * Filters out system schemas (pg_catalog, information_schema, pg_toast)
    * and any additional system schemas found in the database.
@@ -106,12 +83,11 @@ export default abstract class DbUtils {
    * ```
    */
   public static async getSchemas(knex: Knex): Promise<Readonly<string[]>> {
-    const systemSchemas = await this.getSystemSchemas(knex);
-
     const list: Awaited<{ schema_name: string }[]> = await knex
       .select('schema_name')
       .from('information_schema.schemata')
-      .whereNotIn('schema_name', ['pg_catalog', 'information_schema', 'pg_toast', ...systemSchemas])
+      .whereNotIn('schema_name', ['information_schema'])
+      .andWhereRaw(`schema_name NOT ILIKE 'pg_%'`)
       .orderBy('schema_name');
 
     return list.map((x) => x.schema_name);

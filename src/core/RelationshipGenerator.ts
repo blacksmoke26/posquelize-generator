@@ -21,6 +21,31 @@ import type { Relationship } from '~/typings/utils';
 import type { InitTemplateVars, ModelTemplateVars } from './ModelGenerator';
 
 /**
+ * Interface for filtering relationships during generation.
+ * Used to control which relationships are included when generating Sequelize model associations.
+ *
+ * @interface GenerateRelationFilters
+ *
+ * @example
+ * ```typescript
+ * // Filter out specific schemas and tables
+ * const filters: GenerateRelationFilters = {
+ *   schemas: ['temp', 'archive'],
+ *   tables: ['audit_log', 'temp_data']
+ * };
+ *
+ * // Use with RelationshipGenerator.generateRelations()
+ * RelationshipGenerator.generateRelations(relationships, templateVars, filters);
+ * ```
+ */
+export interface GenerateRelationFilters {
+  /** Array of schema names to exclude from relationship generation */
+  schemas?: string[];
+  /** Array of table names to exclude from relationship generation */
+  tables?: string[];
+}
+
+/**
  * Abstract utility class for generating Sequelize relationship aliases and mixin declarations.
  * This class handles the creation of TypeScript declarations for various relationship types
  * including HasMany, BelongsTo, HasOne, and BelongsToMany relationships.
@@ -471,8 +496,14 @@ export default abstract class RelationshipGenerator {
    * This method processes all relationships and generates the appropriate Sequelize model
    * initialization code, including imports, exports, and association definitions.
    *
+   * Supports filtering relationships by schema and table names to selectively generate
+   * associations based on the provided filters.
+   *
    * @param relationships - Array of relationship configurations to process
    * @param initTplVars - Template variables object that will be modified with all generated code
+   * @param filters - Optional filters to control which relationships to generate
+   * @param filters.schemas - Array of schema names to exclude from generation
+   * @param filters.tables - Array of table names to exclude from generation
    *
    * @example
    * ```typescript
@@ -495,8 +526,23 @@ export default abstract class RelationshipGenerator {
    * // templateVars now contains all the generated relationship code
    * ```
    */
-  public static generateRelations(relationships: Relationship[], initTplVars: InitTemplateVars): void {
+  public static generateRelations(relationships: Relationship[], initTplVars: InitTemplateVars, filters: GenerateRelationFilters = {}): void {
+    // Initialize filters for schemas and tables
+    const schemasFilter = filters?.schemas ?? [];
+    const tablesFilter = filters?.tables ?? [];
+
+    const hasSchemasFilter = schemasFilter.length > 0;
+    const hasTablesFilter = tablesFilter.length > 0;
+
+    // Process each relationship, applying filters and generating appropriate code
     for (const relationship of relationships) {
+      // Skip relationships that doesn't match the schema filter
+      if (hasSchemasFilter && (!schemasFilter.includes(relationship.source.schema) || !schemasFilter.includes(relationship.target.schema))) continue;
+
+      // Skip relationships that doesn't match the table filter
+      if (hasTablesFilter && (!tablesFilter.includes(relationship.source.table) || !tablesFilter.includes(relationship.target.table))) continue;
+
+      // Generate code based on relationship type
       switch (relationship.type) {
         case RelationshipType.BelongsTo:
           RelationshipGenerator.generateBelongsToRelation(relationship, initTplVars);
@@ -513,6 +559,7 @@ export default abstract class RelationshipGenerator {
       }
     }
 
+    // Clean up trailing whitespace in generated template variables
     initTplVars.importClasses = initTplVars.importClasses.trimEnd();
     initTplVars.importTypes = initTplVars.importTypes.trimEnd();
     initTplVars.exportClasses = initTplVars.exportClasses.trimEnd();

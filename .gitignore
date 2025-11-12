@@ -143,3 +143,6 @@ dist
 *.*bak*
 *.zip
 *.rar
+
+src/repl*.*ts
+arena

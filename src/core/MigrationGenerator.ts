@@ -63,13 +63,36 @@ export interface MigrationConfig {
 }
 
 /** Interface for migration generation options */
-interface MigrationOptions {
+export interface MigrationOptions {
   /** The directory name where the migration is being processed */
   dirname: string;
   /** The output directory where migration files will be generated */
   outDir: string;
   /** The root directory of the project */
   rootDir: string;
+  /** Optional array of table names to generate migrations for. If not provided, generates for all tables. */
+  tables?: string[];
+  /** Configuration for controlling which migration components to generate */
+  generate?: {
+    /** Generate migration files for table indexes */
+    indexes?: boolean;
+    /** Generate initial seeder files for database records */
+    seeders?: boolean;
+    /** Generate migration files for database functions */
+    functions?: boolean;
+    /** Generate migration files for custom domains */
+    domains?: boolean;
+    /** Generate migration files for composite types */
+    composites?: boolean;
+    /** Generate migration files for table structures */
+    tables?: boolean;
+    /** Generate migration files for database views */
+    views?: boolean;
+    /** Generate migration files for database triggers */
+    triggers?: boolean;
+    /** Generate migration files for foreign key constraints */
+    foreignKeys?: boolean;
+  };
 }
 
 /**
@@ -103,8 +126,20 @@ export default class MigrationGenerator {
    *
    * @returns A deep copy of the migration options to prevent mutation
    */
-  public getOptions(): MigrationOptions {
-    return merge({}, this.options);
+  public getOptions(): Required<MigrationOptions> {
+    return merge({
+      generate: {
+        indexes: true,
+        seeders: true,
+        functions: true,
+        domains: true,
+        composites: true,
+        tables: true,
+        views: true,
+        triggers: true,
+        foreignKeys: true,
+      },
+    }, this.options);
   }
 
   /**
@@ -157,9 +192,17 @@ export default class MigrationGenerator {
    * @param config - Migration configuration
    */
   private async generateDatabaseObjects(config: MigrationConfig): Promise<void> {
-    await MigrationUtils.generateFunctions(this.knex, this.data.schemas, config);
-    await MigrationUtils.generateComposites(this.knex, this.data.schemas, config);
-    await MigrationUtils.generateDomains(this.knex, this.data.schemas, config);
+    if (this.getOptions().generate?.functions) {
+      await MigrationUtils.generateFunctions(this.knex, this.data.schemas, config);
+    }
+
+    if (this.getOptions().generate?.composites) {
+      await MigrationUtils.generateComposites(this.knex, this.data.schemas, config);
+    }
+
+    if (this.getOptions().generate?.domains) {
+      await MigrationUtils.generateDomains(this.knex, this.data.schemas, config);
+    }
   }
 
   /**
@@ -171,6 +214,8 @@ export default class MigrationGenerator {
    * @param config - Migration configuration
    */
   private async generateTableMigrations(config: MigrationConfig): Promise<void> {
+    if (!this.getOptions().generate?.tables) return;
+
     for await (const schemaName of this.data.schemas) {
       await this.processSchema(schemaName, config);
     }
@@ -187,8 +232,11 @@ export default class MigrationGenerator {
    */
   private async processSchema(schemaName: string, config: MigrationConfig): Promise<void> {
     const schemaTables = await DbUtils.getTables(this.knex, schemaName);
+    const filteredTables = schemaTables.filter(x => {
+      return !this.getOptions().tables.length ? true : this.getOptions().tables.includes(x);
+    });
 
-    for await (const tableName of schemaTables) {
+    for await (const tableName of filteredTables) {
       await this.processTable(schemaName, tableName, config);
     }
   }
@@ -226,10 +274,19 @@ export default class MigrationGenerator {
    * @param config - Migration configuration
    */
   private async generateRemainingMigrations(config: MigrationConfig): Promise<void> {
-    await MigrationUtils.generateIndexes(this.data.indexes, config);
+    if (this.getOptions().generate?.indexes) {
+      await MigrationUtils.generateIndexes(this.data.indexes, config);
+    }
+
     await this.generateForeignKeysMigration(config);
-    await MigrationUtils.generateViews(this.knex, this.data.schemas, config);
-    await MigrationUtils.generateTriggers(this.knex, this.data.schemas, config);
+
+    if (this.getOptions().generate?.views) {
+      await MigrationUtils.generateViews(this.knex, this.data.schemas, config);
+    }
+
+    if (this.getOptions().generate?.triggers) {
+      await MigrationUtils.generateTriggers(this.knex, this.data.schemas, config);
+    }
   }
 
   /**
@@ -241,6 +298,8 @@ export default class MigrationGenerator {
    * @param config - Migration configuration
    */
   private async generateForeignKeysMigration(config: MigrationConfig): Promise<void> {
+    if (!this.getOptions().generate?.foreignKeys) return;
+
     const fkVars = MigrationUtils.initVariables();
     MigrationUtils.generateForeignKeys(this.data.foreignKeys, fkVars);
     const fileName = MigrationUtils.createFilename(config.outDir, `create_create-foreign-keys`, config.getTime());
@@ -257,6 +316,8 @@ export default class MigrationGenerator {
    * @param config - Migration configuration
    */
   private async generateInitialSeeders(config: MigrationConfig): Promise<void> {
+    if (!this.getOptions().generate?.seeders) return;
+
     const seedFile = MigrationUtils.createFilename(
       FileHelper.join(config.outDir, '../seeders'),
       'add_init_records',

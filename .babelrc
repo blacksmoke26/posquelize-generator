@@ -1,0 +1,26 @@
+{
+  "presets": [[
+    "@babel/preset-env", {
+      "targets": {
+        "node": "22.0"
+      }
+    }
+  ], "@babel/preset-typescript"],
+  "plugins": [
+    [
+      "module-resolver",
+      {
+        "root": ["./src"],
+        "alias": {
+          "~": "./src"
+        }
+      }
+    ],
+    ["@babel/plugin-transform-runtime"],
+    ["@babel/plugin-proposal-async-do-expressions"],
+    ["@babel/plugin-proposal-decorators", { "legacy": true }],
+    ["@babel/plugin-proposal-do-expressions"],
+    ["@babel/plugin-proposal-export-default-from"],
+    ["@babel/plugin-proposal-throw-expressions"]
+  ]
+}

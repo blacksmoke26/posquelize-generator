@@ -1,12 +1,15 @@
 # Posquelize: PostgreSQL to Sequelize Generator
+
 Automatically generate [SequelizeJS](https://sequelize.org/) minimal application via the command line.
 
 ## Overview
-A powerful CLI tool that automates the generation of Sequelize applications from PostgreSQL databases. This utility connects directly to your PostgreSQL instance, analyzes the database schema, and produces production-ready TypeScript boilerplate with comprehensive type definitions.
+
+Posquelize is a powerful CLI tool that automates the generation of Sequelize applications from PostgreSQL databases. It connects directly to your PostgreSQL instance, analyzes the database schema, and produces production-ready TypeScript boilerplate with comprehensive type definitions.
 
 ## Key Features
 
 ### Core Functionality
+
 - ✅ **Complete Model Generation**: Automatically creates Sequelize models, repositories, and TypeScript type definitions
 - 🔄 **Comprehensive Migration Support**: Generates migrations for tables, functions, domains, views, triggers, indexes, and foreign keys
 - 📊 **Advanced Type Support**: Handles custom/user-defined types (UDT) with automatic conversions
@@ -17,6 +20,7 @@ A powerful CLI tool that automates the generation of Sequelize applications from
 - 🎯 **Production-Ready Boilerplate**: Creates a minimal but complete application structure
 
 ### Developer Experience
+
 - 🔐 **Secure Authentication**: Interactive password prompts to avoid sensitive data in command history
 - 📁 **Flexible Output**: Configurable output directory and Sequelize directory structure
 - 🧹 **Clean Generation**: Automatic directory cleanup with `--clean` option
@@ -48,40 +52,47 @@ posquelize -h localhost -u postgres -d myapp_db -x --clean
 
 ### Optional Parameters
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| 🔌 `-p, --port <port>` | Database connection port | `5432` |
-| 📁 `-o, --output <directory>` | Output directory path | `./myapp` |
-| 📂 `-n, --dirname <directory>` | Sequelize subdirectory name | `database` |
-| 🏗️ `--schemas <schemas>` | Specific schemas to process (comma-separated) | `all schemas` |
-| 📋 `--tables <tables>` | Specific tables to generate (comma-separated) | `all tables` |
-| 🧹 `--clean` | Clean output directory before generation | `false` |
+| Option                      | Description                                                   | Default    |
+|-----------------------------|---------------------------------------------------------------|------------|
+| 🔌 `-p, --port <port>`      | Database connection port                                      | `5432`     |
+| 📁 `-o, --output <directory>` | Output directory path                                         | `./myapp`  |
+| 📂 `-n, --dirname <directory>` | Sequelize subdirectory name                                   | `database` |
+| 🧹 `--clean`                | Clean output directory before generation                      | `false`    |
+| 🏗️ `--schemas <schemas>`   | Specific schemas to process (comma-separated)                 | `all`      |
+| 📋 `--tables <tables>`      | Specific tables to generate (comma-separated)                 | `all`      |
+| 📊 `--no-diagram`        | Skip [DBML](https://dbml.dbdiagram.io/) ER diagram generation | `false`    |
+| 📋 `--no-migrations`     | Skip migration files generation                               | `false`    |
+| 📦 `--no-repositories`   | Skip repository files generation                              | `false`    |
 
 ## Usage Examples
 
 ### Interactive Password Prompt
+
 ```bash
 posquelize -h localhost -u postgres -d myapp_db -x
 ```
 
 ### Schema-Specific Generation
+
 ```bash
 posquelize -h localhost -u postgres -d myapp_db -x --schemas public,auth
 ```
 
 ### Table-Specific Generation
+
 ```bash
 posquelize -h localhost -u postgres -d myapp_db -x --tables users,posts,comments
 ```
 
 ### Custom Output with Clean Build
+
 ```bash
 posquelize -h localhost -u postgres -d myapp_db -x -o ./my-sequelize-app --clean
 ```
 
 ## Generated Project Structure
 
-```
+```text
 myapp/
 │   📄 .env                  # Environment variables
 │   📄 .gitignore            # Git ignore rules
@@ -134,16 +145,18 @@ The tool generates a complete application structure with:
 
 ## Tech Stack & Tools
 
+- **Machine**: Legion Pro 7 [16IAX10H](https://psref.lenovo.com/Detail/Legion_Pro_7_16IAX10H?M=83F50050PS)
 - **Development Environment**: Windows 11
 - **Primary IDE**: JetBrains PhpStorm
 - **Alternative Editor**: [Zed AI](https://zed.dev/) with AI assistance
-- **AI Tools**: Qwen AI, Ollama (GLM 4.6, Qwen 3 Coder)
+- **AI Tools**: [Qwen](https://qwen.ai/home), Ollama ([GLM 4.6](https://docs.z.ai/guides/llm/glm-4.6), Qwen 3 Coder)
 
 ## Acknowledgments
 
-This project builds upon concepts and implementations from [sequelize-models-generator](https://github.com/blacksmoke26/sequelize-models-generator), with significant enhancements for TypeScript support and application generation.
+This project builds upon concepts and implementations from [Sequelize Models Generator](https://github.com/blacksmoke26/sequelize-models-generator), with significant enhancements for TypeScript support and application generation.
 
 ## Inspirations
+
 This project draws inspiration from innovative tools in the Sequelize ecosystem:
 
 - **[Sequelize UI](https://sequelizeui.app/)** - A comprehensive web-based solution for generating TypeScript Sequelize code with flexible database configurations and customizable outputs.

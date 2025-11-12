@@ -14,11 +14,10 @@
  */
 
 import fs from 'node:fs';
-import path from 'node:path';
 
 import merge from 'deepmerge';
-import {rimraf} from 'rimraf';
-import {pascalCase} from 'change-case';
+import { rimraf } from 'rimraf';
+import { pascalCase } from 'change-case';
 
 // helpers
 import FileHelper from '~/helpers/FileHelper';
@@ -28,40 +27,17 @@ import StringHelper from '~/helpers/StringHelper';
 import DbUtils from '~/classes/DbUtils';
 import TemplateWriter from './TemplateWriter';
 import KnexClient from '~/classes/KnexClient';
-import MigrationGenerator from './MigrationGenerator';
+import MigrationGenerator, { MigrationOptions } from './MigrationGenerator';
 import RelationshipGenerator from './RelationshipGenerator';
-import TableColumns, {type ColumnInfo} from '~/classes/TableColumns';
+import TableColumns, { type ColumnInfo } from '~/classes/TableColumns';
 
 // utils
-import ModelGenerator, {InitTemplateVars, ModelTemplateVars, sp} from './ModelGenerator';
+import ModelGenerator, { InitTemplateVars, ModelTemplateVars, sp } from './ModelGenerator';
 
 // types
-import type {Knex} from 'knex';
-import type {ForeignKey, Relationship, TableIndex} from '~/typings/utils';
-
-/**
- * Configuration options for the generator
- */
-export interface GeneratorOptions {
-  /**
-   * The directory name where generated files will be placed
-   * @default 'database'
-   */
-  dirname?: string;
-  /**
-   * List of schemas to generate models for
-   */
-  schemas?: string[];
-  /**
-   * List of tables to generate models for
-   */
-  tables?: string[];
-  /**
-   * Whether to clean the root directory before generation
-   * @default false
-   */
-  cleanRootDir?: boolean;
-}
+import type { Knex } from 'knex';
+import type { ForeignKey, Relationship, TableIndex } from '~/typings/utils';
+import type { GeneratorOptions } from '~/typings/generator';
 
 /**
  * Generates Sequelize models, migrations, and related files from a database schema.
@@ -81,6 +57,21 @@ export interface GeneratorOptions {
  * ```
  */
 export default class PosquelizeGenerator {
+  /**
+   * The Knex.js database client instance used for all database operations.
+   * This client is created during initialization and used throughout the generation
+   * process for schema introspection, table queries, and metadata extraction.
+   * 
+   * The client is configured using the provided connection string and supports
+   * all database operations needed for model generation, including:
+   * - Schema information retrieval
+   * - Table structure analysis
+   * - Index and foreign key inspection
+   * - Relationship discovery
+   * 
+   * @see KnexClient.create() for the client creation logic
+   * @see Database connection is established in the constructor
+   */
   public knex: Knex;
 
   /**
@@ -124,6 +115,9 @@ export default class PosquelizeGenerator {
         tables: [],
         dirname: 'database',
         cleanRootDir: false,
+        diagram: true,
+        migrations: true,
+        repositories: true,
       },
       this.options,
     );
@@ -155,9 +149,54 @@ export default class PosquelizeGenerator {
     this.getBaseDir('base');
     this.getBaseDir('config');
     this.getBaseDir('typings');
-    this.getBaseDir('diagrams');
     this.getBaseDir('repositories');
     this.getBaseDir('seeders');
+  }
+
+  /**
+   * Filters database tables and schemas based on generator configuration.
+   *
+   * Determines whether a given table and schema combination should be included in the generation
+   * process based on the schemas and tables filtering options. This method is used throughout
+   * the generation process to ensure only the requested schemas and tables are processed.
+   *
+   * The filtering logic follows these rules:
+   * - If no schemas are specified (empty array), all schemas are allowed
+   * - If schemas are specified, the given schema must be in the allowed list
+   * - If no tables are specified (empty array), all tables are allowed
+   * - If tables are specified, the given table must be in the allowed list
+   * - Both schema and table filters must pass for the table to be included
+   *
+   * @param tableName - The name of the database table to check
+   * @param schemaName - The name of the database schema containing the table
+   * @returns True if the table/schema combination should be included in generation, false otherwise
+   *
+   * @example
+   * ```typescript
+   * // With options { schemas: ['public'], tables: ['users'] }
+   * filterSchemaTables('users', 'public') // true
+   * filterSchemaTables('posts', 'public') // false (table not in filter)
+   * filterSchemaTables('users', 'auth')   // false (schema not in filter)
+   *
+   * // With options { schemas: [], tables: [] } (no filters)
+   * filterSchemaTables('any_table', 'any_schema') // true (everything allowed)
+   * ```
+   */
+  private filterSchemaTables (tableName: string, schemaName: string): boolean {
+    let hasPassed = true;
+
+    const filterSchemas = this.getOptions().schemas;
+    const filterTables = this.getOptions().tables;
+
+    if (filterSchemas.length && !filterSchemas.includes(schemaName)) {
+      hasPassed = false;
+    }
+
+    if (filterTables.length && !filterTables.includes(tableName)) {
+      hasPassed = false;
+    }
+
+    return hasPassed;
   }
 
   /**
@@ -173,10 +212,21 @@ export default class PosquelizeGenerator {
       DbUtils.getForeignKeys(this.knex),
     ]);
 
-    this.dbData.schemas = schemas;
-    this.dbData.indexes = indexes;
-    this.dbData.relationships = relationships;
-    this.dbData.foreignKeys = foreignKeys;
+    this.dbData.schemas = schemas.filter(x => {
+      return !this.getOptions().schemas.length ? true : this.getOptions().schemas.includes(x);
+    });
+
+    this.dbData.indexes = indexes.filter(x => {
+      return this.filterSchemaTables(x.table, x.schema);
+    });
+
+    this.dbData.relationships = relationships.filter(x => {
+      return this.filterSchemaTables(x.source.schema, x.source.table) || this.filterSchemaTables(x.target.schema, x.target.table);
+    });
+
+    this.dbData.foreignKeys = foreignKeys.filter(x => {
+      return this.filterSchemaTables(x.tableName, x.schema);
+    });
   }
 
   /**
@@ -198,7 +248,7 @@ export default class PosquelizeGenerator {
   private async getSchemaTables(schemaName: string): Promise<Readonly<string[]>> {
     const schemaTables = await DbUtils.getTables(this.knex, schemaName);
     return schemaTables.filter((x) => {
-      return !this.getOptions().tables.length ? true : this.getOptions().schemas.includes(x);
+      return !this.getOptions().tables.length ? true : this.getOptions().tables.includes(x);
     });
   }
 
@@ -212,7 +262,7 @@ export default class PosquelizeGenerator {
   private async generateModels(initTplVars: InitTemplateVars, interfacesVar: { text: string }, config: {
     anyModelName: string
   }): Promise<void> {
-    const schemas = this.getFilteredSchemas();
+    const schemas = this.dbData.schemas;
 
     for await (const schemaName of schemas) {
       const schemaTables = await this.getSchemaTables(schemaName);
@@ -221,17 +271,6 @@ export default class PosquelizeGenerator {
         await this.processTable(tableName, schemaName, initTplVars, interfacesVar, config);
       }
     }
-  }
-
-  /**
-   * Filters schemas based on the generator options.
-   * Returns all schemas if no specific schemas are configured.
-   * @returns Array of filtered schema names
-   */
-  private getFilteredSchemas(): string[] {
-    return this.dbData.schemas.filter((x) => {
-      return !this.getOptions().schemas.length ? true : this.getOptions().schemas.includes(x);
-    });
   }
 
   /**
@@ -266,7 +305,9 @@ export default class PosquelizeGenerator {
     this.writeModelFile(modelName, modTplVars);
     this.updateConfig(config, modelName);
 
-    TemplateWriter.writeRepoFile(this.getBaseDir(), StringHelper.tableToModel(tableName), this.getOptions().dirname);
+    if ( this.getOptions().repositories ) {
+      TemplateWriter.writeRepoFile(this.getBaseDir(), StringHelper.tableToModel(tableName), this.getOptions().dirname);
+    }
   }
 
   /**
@@ -442,7 +483,9 @@ export default class PosquelizeGenerator {
     } = {anyModelName: ''};
 
     // Write base template files
-    TemplateWriter.writeBaseFiles(this.getBaseDir(), this.getOptions().dirname, this.connectionString);
+    TemplateWriter.writeBaseFiles(this.getBaseDir(), this.getOptions().dirname, this.connectionString, {
+      repoBase: this.getOptions().repositories,
+    });
 
     // Initialize template variables for models and interfaces
     const initTplVars = ModelGenerator.getInitializerTemplateVars();
@@ -459,16 +502,71 @@ export default class PosquelizeGenerator {
     });
 
     // Write server configuration file
-    TemplateWriter.writeServerFile(FileHelper.dirname(this.getBaseDir()), config.anyModelName, this.getOptions().dirname!);
+    TemplateWriter.writeServerFile(FileHelper.dirname(this.getBaseDir()), config.anyModelName, this.getOptions().dirname);
+
     // Generate relationship definitions
-    RelationshipGenerator.generateRelations(this.dbData.relationships, initTplVars);
+    RelationshipGenerator.generateRelations(this.dbData.relationships, initTplVars, {
+      schemas: this.getOptions().schemas,
+      tables: this.getOptions().tables,
+    });
 
     // Write models initializer file
     const fileName = FileHelper.join(this.getBaseDir('models'), 'index.ts');
     TemplateWriter.renderOut('models-initializer', fileName, initTplVars);
     console.log('Models Initializer generated:', fileName);
 
-    // Generate migration files
+    await Promise.all([
+      this.generateMigrations(),
+      this.generateDiagram(),
+    ]);
+  }
+
+  /**
+   * Generates Entity Relationship Diagram (ERD) files for the database schema.
+   *
+   * This method creates visual representations of the database structure including
+   * tables, relationships, and constraints. The diagrams are generated in the
+   * diagrams subdirectory of the base output directory.
+   *
+   * Generation can be disabled by setting the diagram option to false in the
+   * generator configuration.
+   *
+   * @throws {Error} When diagram generation fails due to connection or permission issues
+   */
+  private async generateDiagram(): Promise<void> {
+    if (!this.getOptions().diagram) {
+      return;
+    }
+
+    await TemplateWriter.writeDiagrams(this.getBaseDir('diagrams'), this.connectionString);
+  }
+
+  /**
+   * Generates database migration files based on the current schema.
+   *
+   * This method creates migration scripts that can be used to recreate the database
+   * schema in another environment. It includes all tables, indexes, foreign keys,
+   * and other schema objects. The migrations are generated in the migrations
+   * subdirectory of the base output directory.
+   *
+   * The migration files follow the Knex.js migration format and include:
+   * - Table creation statements
+   * - Column definitions with types and constraints
+   * - Index creation
+   * - Foreign key constraints
+   * - Schema-specific considerations
+   *
+   * Generation can be disabled by setting the migrations option to false in the
+   * generator configuration.
+   *
+   * @throws {Error} When migration generation fails due to schema analysis errors
+   * @see {@link MigrationGenerator} For the underlying migration generation logic
+   */
+  private async generateMigrations(): Promise<void> {
+    if (this.getOptions().migrations === false) {
+      return;
+    }
+
     const migGenerator = new MigrationGenerator(
       this.knex,
       {
@@ -480,12 +578,11 @@ export default class PosquelizeGenerator {
         dirname: this.getOptions().dirname,
         outDir: this.getBaseDir('migrations'),
         rootDir: this.rootDir,
+        tables: this.getOptions().tables,
+        generate: this.getOptions().migrations as MigrationOptions['generate']
       },
     );
 
     await migGenerator.generate();
-
-    // generate ERD (Entity-Relationship Diagram) diagrams
-    await TemplateWriter.writeDiagrams(path.normalize(`${this.getBaseDir()}/diagrams`), this.connectionString);
   }
 }

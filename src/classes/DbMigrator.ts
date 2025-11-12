@@ -90,9 +90,47 @@ export enum TriggerEvent {
  */
 export default abstract class DbMigrator {
   /**
+   * Filters database schemas based on allowed schemas configuration.
+   * Determines whether a given schema name should be included based on the allowedSchemas filter.
+   * @param schemaName - The schema name to check against the allowed schemas
+   * @param allowedSchemas - Optional filter for allowed schemas. Can be:
+   *   - null or undefined: All schemas are allowed
+   *   - string: Only the exact matching schema is allowed
+   *   - string array: Any schema included in the array is allowed
+   * @returns boolean indicating whether the schema should be included
+   * @example
+   * ```typescript
+   * // Allow all schemas
+   * DbMigrator.filterSchemas('public'); // true
+   *
+   * // Allow only specific schema
+   * DbMigrator.filterSchemas('public', 'public'); // true
+   * DbMigrator.filterSchemas('user', 'public'); // false
+   *
+   * // Allow multiple schemas
+   * DbMigrator.filterSchemas('public', ['public', 'admin']); // true
+   * DbMigrator.filterSchemas('user', ['public', 'admin']); // false
+   * ```
+   */
+  private static filterSchemas(schemaName: string, allowedSchemas: string | readonly string[] | null = null): boolean {
+    if (!allowedSchemas) return true;
+
+    if ( typeof allowedSchemas === 'string') {
+      return schemaName === allowedSchemas;
+    } else if (Array.isArray(allowedSchemas)) {
+      return allowedSchemas.length ? allowedSchemas.includes(schemaName) : true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
    * Retrieves a list of database views from the database.
    * @param knex - Knex instance for database connection
-   * @param schemaName - Optional schema name to filter views (defaults to null)
+   * @param allowedSchemas - Optional filter for allowed schemas. Can be:
+   *   - null or undefined: All schemas are included
+   *   - string: Only the exact matching schema is included
+   *   - string array: Any schema included in the array is included
    * @returns Promise resolving to an array of database view information
    * @example
    * ```typescript
@@ -105,7 +143,7 @@ export default abstract class DbMigrator {
    * console.log(allViews);
    * ```
    */
-  public static async getViews(knex: Knex, schemaName: string | null = null): Promise<DbView[]> {
+  public static async getViews(knex: Knex, allowedSchemas: string | readonly string[] | null = null): Promise<DbView[]> {
     const query = FileHelper.readSqlFile('migrator/database-views.sql');
 
     try {
@@ -125,15 +163,7 @@ export default abstract class DbMigrator {
       }>(query);
 
       return rows
-        .filter((x) => {
-          let isSchema: boolean = true;
-
-          if (schemaName) {
-            isSchema = x.schema_name === schemaName;
-          }
-
-          return isSchema;
-        })
+        .filter((x) => this.filterSchemas(x.schema_name, allowedSchemas))
         .map(
           (x) =>
             ({
@@ -157,7 +187,10 @@ export default abstract class DbMigrator {
   /**
    * Retrieves a list of database domains from the database.
    * @param knex - Knex instance for database connection
-   * @param schemaName - Optional schema name to filter domains (defaults to null)
+   * @param allowedSchemas - Optional filter for allowed schemas. Can be:
+   *   - null or undefined: All schemas are included
+   *   - string: Only the exact matching schema is included
+   *   - string array: Any schema included in the array is included
    * @returns Promise resolving to an array of database domain information
    * @example
    * ```typescript
@@ -170,7 +203,7 @@ export default abstract class DbMigrator {
    * console.log(allDomains);
    * ```
    */
-  public static async getDomains(knex: Knex, schemaName: string | null = null): Promise<DbDomain[]> {
+  public static async getDomains(knex: Knex, allowedSchemas: string | readonly string[] | null = null): Promise<DbDomain[]> {
     const query = FileHelper.readSqlFile('migrator/database-domains.sql');
 
     try {
@@ -184,15 +217,7 @@ export default abstract class DbMigrator {
       }>(query);
 
       return rows
-        .filter((x) => {
-          let isSchema: boolean = true;
-
-          if (schemaName) {
-            isSchema = x.domain_schema === schemaName;
-          }
-
-          return isSchema;
-        })
+        .filter((x) => this.filterSchemas(x.domain_schema, allowedSchemas))
         .map(
           (x) =>
             ({
@@ -210,7 +235,10 @@ export default abstract class DbMigrator {
   /**
    * Retrieves a list of database functions from the database.
    * @param knex - Knex instance for database connection
-   * @param schemaName - Optional schema name to filter functions (defaults to null)
+   * @param allowedSchemas - Optional filter for allowed schemas. Can be:
+   *   - null or undefined: All schemas are included
+   *   - string: Only the exact matching schema is included
+   *   - string array: Any schema included in the array is included
    * @returns Promise resolving to an array of database function information
    * @example
    * ```typescript
@@ -221,9 +249,13 @@ export default abstract class DbMigrator {
    * // Get all functions across all schemas
    * const allFunctions = await DbMigrator.getFunctions(knex);
    * console.log(allFunctions);
+   *
+   * // Get functions from multiple schemas
+   * const multiSchemaFunctions = await DbMigrator.getFunctions(knex, ['public', 'admin']);
+   * console.log(multiSchemaFunctions);
    * ```
    */
-  public static async getFunctions(knex: Knex, schemaName: string | null = null): Promise<DbFunction[]> {
+  public static async getFunctions(knex: Knex, allowedSchemas: string | readonly string[] | null = null): Promise<DbFunction[]> {
     const query = FileHelper.readSqlFile('migrator/database-functions.sql');
 
     try {
@@ -232,28 +264,19 @@ export default abstract class DbMigrator {
       }>(query);
 
       return rows
-        .filter((x) => {
-          let isSchema: boolean = true;
-
-          if (schemaName) {
-            isSchema = x.schema === schemaName;
-          }
-
-          return isSchema;
-        })
-        .map(
-          (x) =>
-            ({
-              schema: x.schema,
-              name: x.name,
-              arguments: x.arguments,
-              returnType: x.returnType,
-              language: x.language,
-              volatility: VolatilityType[x.volatility as keyof typeof VolatilityType],
-              isSecurityDefiner: false,
-              definition: x.definition.trim(),
-            }) satisfies DbFunction,
-        );
+        .filter((x) => this.filterSchemas(x.schema, allowedSchemas))
+        .map(x => {
+          return {
+            schema: x.schema,
+            name: x.name,
+            arguments: x.arguments,
+            returnType: x.returnType,
+            language: x.language,
+            volatility: VolatilityType[x.volatility as keyof typeof VolatilityType],
+            isSecurityDefiner: false,
+            definition: x.definition.trim(),
+          } satisfies DbFunction;
+        });
     } catch {
       return [];
     }
@@ -262,7 +285,10 @@ export default abstract class DbMigrator {
   /**
    * Retrieves a list of database triggers from the database.
    * @param knex - Knex instance for database connection
-   * @param schemaName - Optional schema name to filter triggers (defaults to null)
+   * @param allowedSchemas - Optional filter for allowed schemas. Can be:
+   *   - null or undefined: All schemas are included
+   *   - string: Only the exact matching schema is included
+   *   - string array: Any schema included in the array is included
    * @returns Promise resolving to an array of database trigger information
    * @example
    * ```typescript
@@ -275,7 +301,7 @@ export default abstract class DbMigrator {
    * console.log(allTriggers);
    * ```
    */
-  public static async getTriggers(knex: Knex, schemaName: string | null = null): Promise<DbTrigger[]> {
+  public static async getTriggers(knex: Knex, allowedSchemas: string | readonly string[] | null = null): Promise<DbTrigger[]> {
     const query = FileHelper.readSqlFile('migrator/database-triggers.sql');
 
     try {
@@ -284,30 +310,21 @@ export default abstract class DbMigrator {
       }>(query);
 
       return rows
-        .filter((x) => {
-          let isSchema: boolean = true;
-
-          if (schemaName) {
-            isSchema = x.schema === schemaName;
-          }
-
-          return isSchema;
-        })
-        .map(
-          (x) =>
-            ({
-              schema: x.schema,
-              table: x.table,
-              name: x.name,
-              timing: TriggerTiming[pascalCase(x.timing) as keyof typeof TriggerTiming],
-              event: TriggerEvent[pascalCase(x.event) as keyof typeof TriggerEvent],
-              functionSchema: x.functionSchema,
-              functionName: x.functionName,
-              enabledStatus: x.enabledStatus,
-              isConstraintTrigger: x.isConstraintTrigger,
-              definition: x.definition.trim(),
-            }) satisfies DbTrigger,
-        );
+        .filter((x) => this.filterSchemas(x.schema, allowedSchemas))
+        .map(x => {
+          return {
+            schema: x.schema,
+            table: x.table,
+            name: x.name,
+            timing: TriggerTiming[pascalCase(x.timing) as keyof typeof TriggerTiming],
+            event: TriggerEvent[pascalCase(x.event) as keyof typeof TriggerEvent],
+            functionSchema: x.functionSchema,
+            functionName: x.functionName,
+            enabledStatus: x.enabledStatus,
+            isConstraintTrigger: x.isConstraintTrigger,
+            definition: x.definition.trim(),
+          } satisfies DbTrigger;
+        });
     } catch {
       return [];
     }
@@ -316,7 +333,10 @@ export default abstract class DbMigrator {
   /**
    * Retrieves a list of database composites from the database.
    * @param knex - Knex instance for database connection
-   * @param schemaName - Optional schema name to filter composites (defaults to null)
+   * @param allowedSchemas - Optional filter for allowed schemas. Can be:
+   *   - null or undefined: All schemas are included
+   *   - string: Only the exact matching schema is included
+   *   - string array: Any schema included in the array is included
    * @returns Promise resolving to an array of database composite information
    * @example
    * ```typescript
@@ -329,7 +349,7 @@ export default abstract class DbMigrator {
    * console.log(allComposites);
    * ```
    */
-  public static async getComposites(knex: Knex, schemaName: string | null = null): Promise<DbComposite[]> {
+  public static async getComposites(knex: Knex, allowedSchemas: string | readonly string[] | null = null): Promise<DbComposite[]> {
     const query = FileHelper.readSqlFile('migrator/database-composites.sql');
 
     try {
@@ -338,24 +358,15 @@ export default abstract class DbMigrator {
       }>(query);
 
       return rows
-        .filter((x) => {
-          let isSchema: boolean = true;
-
-          if (schemaName) {
-            isSchema = x.schema === schemaName;
-          }
-
-          return isSchema;
-        })
-        .map(
-          (x) =>
-            ({
-              schema: x.schema,
-              name: x.name,
-              params: x.params,
-              definition: x.definition.trim(),
-            }) satisfies DbComposite,
-        );
+        .filter((x) => this.filterSchemas(x.schema, allowedSchemas))
+        .map(x => {
+          return {
+            schema: x.schema,
+            name: x.name,
+            params: x.params,
+            definition: x.definition.trim(),
+          } satisfies DbComposite;
+        });
     } catch {
       return [];
     }
