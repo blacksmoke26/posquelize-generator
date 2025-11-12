@@ -134,6 +134,92 @@ The tool generates a complete application structure with:
 - **Relationship Maps**: Automatically configured associations
 - **Repository Pattern**: Abstraction layer for data access
 
+
+## Programmatic API
+
+The Posquelize programmatic API allows you to integrate database generation directly into your TypeScript/JavaScript applications. This provides greater flexibility and automation capabilities compared to using the CLI alone.
+
+### Basic Usage
+
+```ts
+import { PosquelizeGenerator } from 'posquelize';
+
+// Define your PostgreSQL connection string
+// Format: postgresql://<user>:<pass>@<host>:<port>/<database>
+const connectionString = 'postgresql://user:pass@localhost:5432/test_db';
+
+// Initialize the generator with connection string and output path
+const generator = new PosquelizeGenerator(connectionString, __dirname + '/myapp', {
+  cleanRootDir: true, // Clean output directory before generation
+
+  // Optional configuration options (uncomment to use)
+  /*
+  dirname: 'db', // Sequelize subdirectory name
+  schemas: ['public'], // Specific schemas to process
+  tables: ['tags', 'brands', 'products'], // Specific tables to generate
+
+  // Migration configuration
+  migrations: {
+    indexes: true,    // Generate index migrations
+    seeders: true,    // Generate seeder files
+    functions: true,  // Generate function migrations
+    domains: true,    // Generate domain migrations
+    composites: true, // Generate composite type migrations
+    tables: true,     // Generate table migrations
+    views: true,      // Generate view migrations
+    triggers: true,   // Generate trigger migrations
+    foreignKeys: true // Generate foreign key migrations
+  },
+
+  diagram: false,       // Skip DBML diagram generation
+  repositories: false   // Skip repository file generation
+  */
+});
+
+// Execute the generation process
+await generator.generate();
+```
+
+### Advanced Configuration
+
+The programmatic API supports all configuration options available in the CLI tool, allowing for fine-grained control over the generation process:
+
+```ts
+import { PosquelizeGenerator, GeneratorOptions } from 'posquelize';
+
+const options: GeneratorOptions = {
+  cleanRootDir: true,
+  dirname: 'database',
+  schemas: ['public', 'auth'],
+  tables: ['users', 'posts', 'comments'],
+  migrations: {
+    tables: true,
+    foreignKeys: true,
+    indexes: false
+  },
+  diagram: true,
+  repositories: true
+};
+
+const generator = new PosquelizeGenerator(connectionString, './output', options);
+
+await generator.generate();
+```
+
+### Error Handling
+
+Always wrap the generation process in try-catch blocks to handle potential connection or generation errors:
+
+```ts
+try {
+  await generator.generate();
+  console.log('Database generation completed successfully!');
+} catch (error) {
+  console.error('Generation failed:', error.message);
+  // Handle error appropriately for your application
+}
+```
+
 ## Contributing to Posquelize
 
 1. Fork the project repository

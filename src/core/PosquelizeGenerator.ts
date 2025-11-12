@@ -61,14 +61,14 @@ export default class PosquelizeGenerator {
    * The Knex.js database client instance used for all database operations.
    * This client is created during initialization and used throughout the generation
    * process for schema introspection, table queries, and metadata extraction.
-   * 
+   *
    * The client is configured using the provided connection string and supports
    * all database operations needed for model generation, including:
    * - Schema information retrieval
    * - Table structure analysis
    * - Index and foreign key inspection
    * - Relationship discovery
-   * 
+   *
    * @see KnexClient.create() for the client creation logic
    * @see Database connection is established in the constructor
    */
@@ -116,7 +116,7 @@ export default class PosquelizeGenerator {
         dirname: 'database',
         cleanRootDir: false,
         diagram: true,
-        migrations: true,
+        migrations: {},
         repositories: true,
       },
       this.options,
