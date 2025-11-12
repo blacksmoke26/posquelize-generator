@@ -39,6 +39,7 @@
     "test",
     "types",
     "lib",
-    "scripts"
+    "scripts",
+    "src/repl*.ts"
   ]
 }
