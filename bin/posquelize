@@ -85,6 +85,10 @@ const argv = yargs(hideBin(process.argv))
     description: 'Do not generate the migration files.',
     type: 'boolean',
   })
+  .option('no-repositories', {
+    description: 'Do not generate the repository files.',
+    type: 'boolean',
+  })
   .default({
     host: 'localhost',
     port: 5432,
@@ -133,7 +137,7 @@ async function readPassword () {
     // do nothing
   }
 
-  /** @type {import('../types').GeneratorOptions}  */
+  /** @type {import('../index').GeneratorOptions}  */
   const config = {
     cleanRootDir: argv.clean,
     dirname: argv.dirname,
@@ -147,6 +151,10 @@ async function readPassword () {
 
   if ( argv['no-migrations'] ) {
     config.migrations = false
+  }
+
+  if ( argv['no-repositories'] ) {
+    config.repositories = false
   }
 
   const connectionString = `postgresql://${argv.user}:${password}@${argv.host}:${argv.port}/${argv.database}`;
