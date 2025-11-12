@@ -28,7 +28,6 @@
  * ```
  */
 
-import moment from 'moment';
 import merge from 'deepmerge';
 
 // classes
@@ -43,6 +42,7 @@ import FileHelper from '~/helpers/FileHelper';
 // types
 import type { Knex } from 'knex';
 import type { ForeignKey, TableIndex } from '~/typings/utils';
+import DateTimeHelper from '~/helpers/DateTimeHelper';
 
 /**
  * Configuration interface for migration generation.
@@ -152,10 +152,10 @@ export default class MigrationGenerator {
    */
   private getMigrationConfig(): MigrationConfig {
     return {
-      timestamp: moment().toDate(),
+      timestamp: new Date(),
       getTime(): number {
-        this.timestamp = moment(this.timestamp).add(30, 'seconds').toDate();
-        return +moment(this.timestamp).format('YYYYMMDDHHmmss');
+        this.timestamp = DateTimeHelper.fromTimestamp(DateTimeHelper.getTimestamp(this.timestamp, 30));
+        return +DateTimeHelper.getTimestamp(this.timestamp);
       },
       dirname: this.getOptions().dirname,
       outDir: this.getOptions().outDir,

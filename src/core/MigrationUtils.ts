@@ -28,7 +28,6 @@
  */
 
 import path from 'node:path';
-import moment from 'moment';
 import { format } from 'sql-formatter';
 import { snakeCase } from 'change-case';
 
@@ -45,6 +44,7 @@ import type { Knex } from 'knex';
 import type { ForeignKey, TableIndex } from '~/typings/utils';
 import type { ColumnInfo } from '~/classes/TableColumns';
 import type { MigrationConfig } from './MigrationGenerator';
+import DateTimeHelper from '~/helpers/DateTimeHelper';
 
 /**
  * Abstract utility class providing comprehensive database migration generation capabilities.
@@ -128,7 +128,7 @@ export default abstract class MigrationUtils {
    * ```
    */
   public static createFilename(outDir: string, fileName: string, timestamp: number | null = null) {
-    return path.normalize(`${outDir}/${timestamp || moment().format('YYYYMMDDHHmmss')}-${snakeCase(fileName)}.js`);
+    return path.normalize(`${outDir}/${timestamp || DateTimeHelper.getTimestamp()}-${snakeCase(fileName)}.js`);
   }
 
   /**
