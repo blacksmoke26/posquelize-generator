@@ -170,7 +170,11 @@ const generator = new PosquelizeGenerator(connectionString, __dirname + '/myapp'
     triggers: true,   // Generate trigger migrations
     foreignKeys: true // Generate foreign key migrations
   },
-
+  generator: {
+    model: {
+      addNullTypeForNullable: true, // Controls whether nullable typed property
+    }
+  },
   diagram: false,       // Skip DBML diagram generation
   repositories: false   // Skip repository file generation
   */
@@ -234,8 +238,8 @@ try {
 - **Machine**: Legion Pro 7 [16IAX10H](https://psref.lenovo.com/Detail/Legion_Pro_7_16IAX10H?M=83F50050PS)
 - **Development Environment**: Windows 11
 - **Primary IDE**: JetBrains PhpStorm
-- **Alternative Editor**: [Zed AI](https://zed.dev/) with AI assistance
-- **AI Tools**: [Qwen](https://qwen.ai/home), Ollama ([GLM 4.6](https://docs.z.ai/guides/llm/glm-4.6), Qwen 3 Coder)
+- **Alternative Editor**: [Zed](https://zed.dev/) with AI assistance
+- **AI Tools**: [Qwen](https://qwen.ai/home), [Ollama](http://ollama.com) ([GLM 4.6](https://docs.z.ai/guides/llm/glm-4.6), Qwen 3 Coder)
 
 ## Acknowledgments
 

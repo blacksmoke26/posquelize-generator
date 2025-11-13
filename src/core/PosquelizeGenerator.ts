@@ -118,6 +118,11 @@ export default class PosquelizeGenerator {
         diagram: true,
         migrations: {},
         repositories: true,
+        generator: {
+          model: {
+            addNullTypeForNullable: true,
+          }
+        },
       },
       this.options,
     );
@@ -371,10 +376,12 @@ export default class PosquelizeGenerator {
 
       ModelGenerator.generateEnums(columnInfo, modTplVars, modelName);
       ModelGenerator.generateInterfaces(columnInfo, modTplVars, interfacesVar);
-      ModelGenerator.generateFields(columnInfo, modTplVars, modelName, {
+      ModelGenerator.generateFields({
+        columnInfo, vars: modTplVars, modelName,
         targetTable: relation?.target?.table ?? null,
         targetColumn: relation?.target?.column ?? null,
         isFK: relation !== null,
+        generator: this.getOptions().generator,
       });
 
       ModelGenerator.generateAttributes({columnInfo, modTplVars, tableForeignKeys: tableData.foreignKeys});

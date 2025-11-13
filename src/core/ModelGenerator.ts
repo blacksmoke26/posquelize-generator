@@ -47,6 +47,7 @@ import TableUtils from '~/classes/TableUtils';
 
 // types
 import { ForeignKey, Relationship, TableIndex } from '~/typings/utils';
+import {GeneratorOptions} from '~/typings/generator';
 
 /**
  * Template variables for generating a Sequelize model
@@ -110,7 +111,7 @@ export interface InitTemplateVars {
  * @description Configuration object containing all the necessary information
  * to determine the appropriate TypeScript type annotation for a model field.
  */
-interface DetermineTypeTextParams {
+export interface DetermineTypeTextParams {
   /** Whether the column is a foreign key referencing another table */
   isFK: boolean;
   /** Whether the column is a primary key */
@@ -123,6 +124,32 @@ interface DetermineTypeTextParams {
   targetTable: string | null;
   /** Name of the referenced column (for foreign keys) */
   targetColumn: string | null;
+  generator?: GeneratorOptions['generator'];
+}
+
+/**
+ * Parameters for generating TypeScript field declarations in the model
+ *
+ * @interface GenerateFieldsParams
+ * @description Contains all the necessary information for generating TypeScript
+ * field declarations for a database column, including column metadata, template
+ * variables to modify, and relationship information.
+ */
+export interface GenerateFieldsParams {
+  /** Complete column information including type, flags, and naming conventions */
+  columnInfo: ColumnInfo;
+  /** Template variables object to modify with generated field declaration */
+  vars: ModelTemplateVars;
+  /** Name of the model being generated (used for type resolution) */
+  modelName: string;
+  /** Whether the column is a foreign key referencing another table */
+  isFK: boolean;
+  /** Name of the referenced table (for foreign keys) */
+  targetTable: string | null;
+  /** Name of the referenced column (for foreign keys) */
+  targetColumn: string | null;
+  /** Generator options configuration */
+  generator?: GeneratorOptions['generator'];
 }
 
 /**
@@ -283,17 +310,15 @@ export default abstract class ModelGenerator {
    */
   private static determineTypeText = (params: DetermineTypeTextParams): string => {
     const {
-      isFK,
-      isPrimary,
-      isNullable,
-      tsType,
-      targetTable,
-      targetColumn,
+      isFK, isPrimary, isNullable, tsType, targetTable, targetColumn,
     } = params;
+
     if (isFK && !isPrimary) {
       return sp(0, `Sequelize.ForeignKey<%s['%s']>`, StringHelper.tableToModel(targetTable!), StringHelper.toPropertyName(targetColumn!));
     }
-    return sp(0, isNullable || isPrimary ? `Sequelize.CreationOptional<%s>` : `%s`, tsType);
+
+    return sp(0, isNullable || isPrimary ? `Sequelize.CreationOptional<%s>` : `%s`, tsType
+      + (params?.generator?.model?.addNullTypeForNullable && isNullable ? ' | null' : ''));
   };
 
   /**
@@ -329,39 +354,33 @@ export default abstract class ModelGenerator {
    * The generated field includes proper typing, readonly modifiers for primary keys,
    * nullable markers, and appropriate JSDoc comments.
    *
-   * @param {ColumnInfo} columnInfo - Column information including type, flags, and naming
-   * @param {ModelTemplateVars} vars - Template variables object to modify with generated field declaration
-   * @param {string} modelName - Name of the model being generated (used for type resolution)
-   * @param {Object} options - Configuration object containing foreign key relationship information
-   * @param {boolean} options.isFK - Whether the column is a foreign key
-   * @param {string|null} options.targetTable - Name of the referenced table (if foreign key)
-   * @param {string|null} options.targetColumn - Name of the referenced column (if foreign key)
-   *
-   * @public
-   * @static
+   * @param {GenerateFieldsParams} params - Parameters object containing column information and generation context
+   * @param {ColumnInfo} params.columnInfo - Column information including type, flags, and naming
+   * @param {ModelTemplateVars} params.vars - Template variables object to modify with generated field declaration
+   * @param {string} params.modelName - Name of the model being generated (used for type resolution)
+   * @param {boolean} params.isFK - Whether the column is a foreign key
+   * @param {string|null} params.targetTable - Name of the referenced table (if foreign key)
+   * @param {string|null} params.targetColumn - Name of the referenced column (if foreign key)
+   * @param {GeneratorOptions['generator']} [params.generator] - Generator options configuration
    */
-  public static generateFields = (
-    columnInfo: ColumnInfo,
-    vars: ModelTemplateVars,
-    modelName: string,
-    { isFK, targetTable, targetColumn }: { targetTable: string | null; targetColumn: string | null; isFK: boolean },
-  ) => {
-    const readOnly = columnInfo.flags.primary ? 'readonly ' : '';
-    const tsType = this.determineTsType(columnInfo, modelName);
+   public static generateFields = (params: GenerateFieldsParams) => {
+    const readOnly = params.columnInfo.flags.primary ? 'readonly ' : '';
+    const tsType = this.determineTsType(params.columnInfo, params.modelName);
 
-    this.addFieldComment(vars, columnInfo);
+    this.addFieldComment(params.vars, params.columnInfo);
 
     const typeText = this.determineTypeText({
-      isFK,
-      isPrimary: columnInfo.flags.primary,
-      isNullable: columnInfo.flags.nullable,
+      isFK: params.isFK,
+      isPrimary: params.columnInfo.flags.primary,
+      isNullable: params.columnInfo.flags.nullable,
       tsType,
-      targetTable,
-      targetColumn,
+      targetTable: params.targetTable,
+      targetColumn: params.targetColumn,
+      generator: params.generator,
     });
 
-    const nullable = columnInfo.flags.nullable ? '?' : '';
-    vars.fields += sp(2, `%sdeclare %s%s: %s;\n`, readOnly, columnInfo.propertyName, nullable, typeText);
+    const nullable = params.columnInfo.flags.nullable ? '?' : '';
+    params.vars.fields += sp(2, `%sdeclare %s%s: %s;\n`, readOnly, params.columnInfo.propertyName, nullable, typeText);
   };
 
   /**

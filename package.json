@@ -1,10 +1,10 @@
 {
   "name": "posquelize",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publishConfig": {
     "tag": "latest"
   },
-  "description": "Automatically generate bare sequelize models, migrations and sequelize app from your database.",
+  "description": "Automatically generate SequelizeJS minimal application via the command line.",
   "main": "index.js",
   "types": "types",
   "keywords": [
@@ -39,6 +39,7 @@
   "bugs": {
     "url": "https://github.com/blacksmoke26/posquelize/issues"
   },
+  "homepage": "https://github.com/blacksmoke26/posquelize",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rimraf lib && rimraf types",
@@ -46,7 +47,7 @@
     "copy:templates": "copyfiles -u 1 src/templates/**/* lib/",
     "build": "npm run clean && npm run copy:sqls && npm run copy:templates && tsc && tsc-alias",
     "prepack": "crlf --set=LF bin/posquelize",
-    "repl": "babel-node ./src/repl.ts --extensions .ts,.js"
+    "repl": "ts-node ./src/repl.ts"
   },
   "engines": {
     "node": ">= 20"
