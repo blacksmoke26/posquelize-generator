@@ -24,6 +24,45 @@ export interface GeneratorOptions {
   cleanRootDir?: boolean;
 
   /**
+   * Configuration options specific to the code generator behavior and output formatting.
+   * These options control how the generated TypeScript models and types are constructed,
+   * allowing for customization of the code generation process to match specific project
+   * requirements and coding standards.
+   */
+  generator?: {
+    /**
+     * Configuration options for model generation, controlling how TypeScript models
+     * and their properties are generated from database schemas.
+     */
+    model: {
+      /**
+       * Controls whether nullable database columns should be explicitly typed with
+       * the `null` type in the generated Model TypeScript property declaration.
+       *
+       * When enabled (true), nullable columns will be typed as `T | null` where T is the
+       * base type. When disabled (false), nullable columns will use the base type only,
+       * relying on TypeScript's strict null checking settings to determine nullability.
+       *
+       * This option is particularly useful when working with TypeScript's strict null
+       * checks or when you need explicit null handling in your generated types.
+       *
+       * @default true
+       * @example  When set to true
+       * ```typescript
+       * declare role?: Sequelize.CreationOptional<string | null>  // nullable column
+       * declare role: Sequelize.CreationOptional<string>  // non-null column
+       * ```
+       * @example When set to false
+       * ```typescript
+       * declare role?: Sequelize.CreationOptional<string>  // nullable column
+       * declare role: Sequelize.CreationOptional<string>  // non-null column
+       * ```
+       */
+      addNullTypeForNullable?: boolean;
+    }
+  };
+
+  /**
    * Controls the generation of database migration files. When enabled, creates
    * migration scripts that can recreate the database schema in another environment.
    *
