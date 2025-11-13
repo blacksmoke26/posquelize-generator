@@ -1,4 +1,14 @@
-import { MigrationOptions } from '~/core/MigrationGenerator';
+/**
+ * @author Junaid Atari <mj.atari@gmail.com>
+ * @copyright 2025 Junaid Atari
+ * @see https://github.com/blacksmoke26
+ *
+ * Configuration interface for the database model generator.
+ * Defines options for controlling model generation, migrations, diagrams,
+ * repositories, and various output formatting preferences.
+ */
+
+import type {MigrationOptions} from '~/core/MigrationGenerator';
 
 /**
  * Configuration options for the generator
@@ -34,7 +44,7 @@ export interface GeneratorOptions {
      * Configuration options for model generation, controlling how TypeScript models
      * and their properties are generated from database schemas.
      */
-    model: {
+    model?: {
       /**
        * Controls whether nullable database columns should be explicitly typed with
        * the `null` type in the generated Model TypeScript property declaration.
@@ -59,7 +69,58 @@ export interface GeneratorOptions {
        * ```
        */
       addNullTypeForNullable?: boolean;
-    }
+    },
+    /**
+     * Configuration for handling database enums during model generation.
+     * Each enum definition maps to a database column with an enum constraint,
+     * specifying the allowed values that can be stored in that column.
+     */
+    enums?: Array<{
+      /**
+       * The full path to the database column that has an enum constraint.
+       * The path follows the format `schemaName.tableName.columnName`, where:
+       * - schemaName: The database schema name (e.g., "public")
+       * - tableName: The name of the table containing the enum column
+       * - columnName: The name of the column with the enum constraint
+       *
+       * This precise path ensures accurate identification of the enum location
+       * in the database schema, allowing for proper type generation and validation.
+       *
+       * @example
+       * ```typescript
+       * path: "public.users.status"  // Schema: public, Table: users, Column: status
+       * path: "auth.accounts.role"   // Schema: auth, Table: accounts, Column: role
+       * ```
+       */
+      path: `${string}.${string}.${string}`,
+      /**
+       * The allowed values for the enum, defining the valid options that can be
+       * stored in the database column. This can be provided in two formats:
+       *
+       * 1. String Array: A simple array of string values when the enum represents
+       *    a basic list of options without associated numeric values
+       * 2. Object Map: A key-value mapping where keys represent the enum member names
+       *    and values can be either strings or numbers, useful when the enum has
+       *    specific numeric mappings or needs to preserve both names and values
+       *
+       * The format chosen affects how the TypeScript enum types are generated.
+       * Arrays create simple string enums, while object maps create enums with
+       * explicit member names and values.
+       *
+       * @example
+       * ```typescript
+       * // String array format - creates a simple string enum
+       * values: ["admin", "user", "moderator"]
+       *
+       * // Object map format - creates an enum with explicit values
+       * values: {active: 10, inactive: 5, deleted: 0, suspended: 3}
+       *
+       * // Mixed string and number values
+       * values: {draft: "draft", published: 1, archived: "archived"}
+       * ```
+       */
+      values: (string[]) | { [k: string]: string | number },
+    }>,
   };
 
   /**
