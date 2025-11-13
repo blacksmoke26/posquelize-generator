@@ -96,4 +96,21 @@ export default abstract class StringHelper {
     const column = String(columnName || '').replace(/_id|Id/g, '');
     return pascalize ? pascalCase(column) : column;
   }
+
+  /**
+   * Converts a table name and column name to a configurable enum name in PascalCase.
+   *
+   * @param tableName - The table name to convert
+   * @param columnName - The column name to convert
+   * @returns The configurable enum name in PascalCase
+   *
+   * @example
+   * ```typescript
+   * StringHelper.toConfigurableEnumName('users', 'roles') // returns 'UserRole'
+   * StringHelper.toConfigurableEnumName('blog_posts', 'categories') // returns 'BlogPostCategory'
+   * ```
+   */
+  public static toConfigurableEnumName(tableName: string, columnName: string): string {
+    return pascalCase(singular(tableName) + '_' + singular(columnName));
+  }
 }
