@@ -46,7 +46,7 @@
     "copy:templates": "copyfiles -u 1 src/templates/**/* lib/",
     "build": "npm run clean && npm run copy:sqls && npm run copy:templates && tsc && tsc-alias",
     "prepack": "crlf --set=LF bin/posquelize",
-    "repl": "babel-node ./src/repl.ts --extensions .ts,.js"
+    "repl": "ts-node ./src/repl.ts"
   },
   "engines": {
     "node": ">= 20"
