@@ -114,10 +114,8 @@ export interface InitTemplateVars {
 export interface DetermineTypeTextParams {
   /** Whether the column is a foreign key referencing another table */
   isFK: boolean;
-  /** Whether the column is a primary key */
-  isPrimary: boolean;
-  /** Whether the column allows null values */
-  isNullable: boolean;
+  /** Complete column information including type, flags, and naming conventions */
+  columnInfo: ColumnInfo;
   /** Base TypeScript type for the column */
   tsType: string;
   /** Name of the referenced table (for foreign keys) */
@@ -277,15 +275,15 @@ export default abstract class ModelGenerator {
    * @private
    * @static
    */
-  private static determineTsType = (columnInfo: ColumnInfo, modelName: string): string => {
-    if (SequelizeParser.isEnum(columnInfo.sequelizeTypeParams)) {
-      return modelName + pascalCase(columnInfo.name);
-    }
-    if (SequelizeParser.isJSON(columnInfo.sequelizeTypeParams)) {
-      return TableUtils.toJsonColumnTypeName(columnInfo.table, columnInfo.name);
-    }
-    return columnInfo.tsType;
-  };
+   private static determineTsType = (columnInfo: ColumnInfo, modelName: string): string => {
+     if (SequelizeParser.isEnum(columnInfo.sequelizeTypeParams)) {
+       return modelName + pascalCase(columnInfo.name);
+     } else if (SequelizeParser.isJSON(columnInfo.sequelizeTypeParams)) {
+       return TableUtils.toJsonColumnTypeName(columnInfo.table, columnInfo.name);
+     } else {
+       return columnInfo.tsType;
+     }
+   };
 
   /**
    * Determines the type annotation text for field declarations in the model
@@ -298,8 +296,7 @@ export default abstract class ModelGenerator {
    *
    * @param {DetermineTypeTextParams} params - Configuration object containing column type information
    * @param {boolean} params.isFK - Whether the column is a foreign key referencing another table
-   * @param {boolean} params.isPrimary - Whether the column is a primary key
-   * @param {boolean} params.isNullable - Whether the column allows null values
+   * @param {ColumnInfo} params.columnInfo - Complete column information including type parameters
    * @param {string} params.tsType - Base TypeScript type for the column
    * @param {string|null} params.targetTable - Name of the referenced table (for foreign keys)
    * @param {string|null} params.targetColumn - Name of the referenced column (for foreign keys)
@@ -309,16 +306,20 @@ export default abstract class ModelGenerator {
    * @static
    */
   private static determineTypeText = (params: DetermineTypeTextParams): string => {
-    const {
-      isFK, isPrimary, isNullable, tsType, targetTable, targetColumn,
-    } = params;
+    const {isFK, columnInfo, tsType, targetTable, targetColumn} = params;
 
-    if (isFK && !isPrimary) {
+    const {primary, nullable} = columnInfo.flags;
+
+    if (isFK && !primary) {
       return sp(0, `Sequelize.ForeignKey<%s['%s']>`, StringHelper.tableToModel(targetTable!), StringHelper.toPropertyName(targetColumn!));
     }
 
-    return sp(0, isNullable || isPrimary ? `Sequelize.CreationOptional<%s>` : `%s`, tsType
-      + (params?.generator?.model?.addNullTypeForNullable && isNullable ? ' | null' : ''));
+    if ( TypeUtils.isJSON(columnInfo.type) && columnInfo?.defaultValue?.toString?.()?.startsWith('[') ) {
+      return sp(0, nullable || primary ? `Sequelize.CreationOptional<%s[]>` : `%s`, tsType);
+    }
+
+    return sp(0, nullable || primary ? `Sequelize.CreationOptional<%s>` : `%s`, tsType
+      + (params?.generator?.model?.addNullTypeForNullable && nullable ? ' | null' : ''));
   };
 
   /**
@@ -371,8 +372,7 @@ export default abstract class ModelGenerator {
 
     const typeText = this.determineTypeText({
       isFK: params.isFK,
-      isPrimary: params.columnInfo.flags.primary,
-      isNullable: params.columnInfo.flags.nullable,
+      columnInfo: params.columnInfo,
       tsType,
       targetTable: params.targetTable,
       targetColumn: params.targetColumn,
