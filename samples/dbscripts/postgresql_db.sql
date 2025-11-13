@@ -10,7 +10,7 @@
  Target Server Version : 170002 (170002)
  File Encoding         : 65001
 
- Date: 09/11/2025 22:01:54
+ Date: 13/11/2025 23:31:19
 */
 
 
@@ -153,7 +153,10 @@ CREATE TABLE "public"."products" (
   "tag_bit" bit(1),
   "counter_interval" interval(6),
   "rollno_domain" "public"."positive_integer",
-  "guid_uuid" uuid
+  "guid_uuid" uuid,
+  "tags_jsonba" jsonb DEFAULT '[{"name": "test"}]'::jsonb,
+  "status" int2,
+  "visibility" varchar(30) COLLATE "pg_catalog"."default" DEFAULT 'public'::character varying
 )
 ;
 COMMENT ON COLUMN "public"."products"."run_at_time" IS 'Run at specific time';
@@ -162,7 +165,7 @@ COMMENT ON COLUMN "public"."products"."letter_char" IS 'Letter type';
 -- ----------------------------
 -- Records of products
 -- ----------------------------
-INSERT INTO "public"."products" VALUES (1, 'test', 2.00, '{}', '2025-10-26 18:50:10.846131', 'blocked', 't', 2.22, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, '7cf8c7b3-d0e7-42a8-ae7e-e059c4e30d8f');
+INSERT INTO "public"."products" VALUES (1, 'test', 2.00, '{}', '2025-10-26 18:50:10.846131', 'blocked', 't', 2.22, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, '7cf8c7b3-d0e7-42a8-ae7e-e059c4e30d8f', '[]', 10, 'public');
 
 -- ----------------------------
 -- Table structure for tags
@@ -325,6 +328,9 @@ CREATE INDEX "IDX_jsonb_meta" ON "public"."products" USING gin (
 CREATE INDEX "IDX_name_varchar100" ON "public"."products" USING btree (
   "name_varchar100" COLLATE "pg_catalog"."default" "pg_catalog"."text_ops" ASC NULLS LAST
 );
+CREATE INDEX "IDX_tags_jsonba_jsonb" ON "public"."products" USING gin (
+  "tags_jsonba" "pg_catalog"."jsonb_ops"
+) WITH (GIN_PENDING_LIST_LIMIT = 65000);
 
 -- ----------------------------
 -- Uniques structure for table products
