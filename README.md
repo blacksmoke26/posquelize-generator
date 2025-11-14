@@ -52,17 +52,19 @@ posquelize -h localhost -u postgres -d myapp_db -x --clean
 
 ### Optional Parameters
 
-| Option                      | Description                                                   | Default    |
-|-----------------------------|---------------------------------------------------------------|------------|
-| 🔌 `-p, --port <port>`      | Database connection port                                      | `5432`     |
-| 📁 `-o, --output <directory>` | Output directory path                                         | `./myapp`  |
+| Option                         | Description                                                   | Default    |
+|--------------------------------|---------------------------------------------------------------|------------|
+| 🔌 `-p, --port <port>`         | Database connection port                                      | `5432`     |
+| 📁 `-o, --output <directory>`  | Output directory path                                         | `./myapp`  |
 | 📂 `-n, --dirname <directory>` | Sequelize subdirectory name                                   | `database` |
-| 🧹 `--clean`                | Clean output directory before generation                      | `false`    |
-| 🏗️ `--schemas <schemas>`   | Specific schemas to process (comma-separated)                 | `all`      |
-| 📋 `--tables <tables>`      | Specific tables to generate (comma-separated)                 | `all`      |
-| 📊 `--no-diagram`        | Skip [DBML](https://dbml.dbdiagram.io/) ER diagram generation | `false`    |
-| 📋 `--no-migrations`     | Skip migration files generation                               | `false`    |
-| 📦 `--no-repositories`   | Skip repository files generation                              | `false`    |
+| 🧹 `--clean`                   | Clean output directory before generation                      | `false`    |
+| 🏗️ `--schemas <schemas>`      | Specific schemas to process (comma-separated)                 | `all`      |
+| 📋 `--tables <tables>`         | Specific tables to generate (comma-separated)                 | `all`      |
+| 📊 `--no-diagram`              | Skip [DBML](https://dbml.dbdiagram.io/) ER diagram generation | `false`    |
+| 📋 `--no-migrations`           | Skip migration files generation                               | `false`    |
+| 📦 `--no-repositories`         | Skip repository files generation                              | `false`    |
+| 🏷️ `--no-enums`               | Use alternative types (`literal` / `union`) instead of `enum` | `false`    |
+| 📋 `--no-null-type`           | Omit `null` in type declaration for nullable column           | `false`    |
 
 ## Usage Examples
 
@@ -173,6 +175,7 @@ const generator = new PosquelizeGenerator(connectionString, __dirname + '/myapp'
   generator: {
     model: {
       addNullTypeForNullable: true, // Controls whether nullable typed property
+      replaceEnumsWithTypes: false, // Replace enum with String Union / Object Literal types
     },
     enums: [{
       path: 'public.products.status',
