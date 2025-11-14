@@ -69,6 +69,33 @@ export interface GeneratorOptions {
        * ```
        */
       addNullTypeForNullable?: boolean;
+      /**
+       * Determines whether database enum columns should be generated as TypeScript union types
+       * rather than native TypeScript enums in the model definitions.
+       *
+       * When enabled, enum columns are transformed into string literal union types,
+       * enhancing type safety during compilation and eliminating runtime enum overhead.
+       * When disabled, the generator creates standard TypeScript enum declarations.
+       *
+       * This configuration is beneficial for:
+       * - Achieving compile-time type checking for enum values
+       * - Reducing bundle size by avoiding enum object generation at runtime
+       * - Improving code maintainability with explicit value representation
+       * - Ensuring consistent type behavior across different execution environments
+       *
+       * @default false
+       * @example When enabled
+       * ```typescript
+       * // Generated with replaceEnumsWithTypes: true
+       * declare status?: CreationOptional<'active' | 'inactive' | 'pending'>;
+       * ```
+       * @example When disabled
+       * ```typescript
+       * // Generated with replaceEnumsWithTypes: false
+       * declare status?: CreationOptional<UserStatus>;
+       * ```
+       */
+      replaceEnumsWithTypes?: boolean;
     },
     /**
      * Configuration for handling database enums during model generation.
