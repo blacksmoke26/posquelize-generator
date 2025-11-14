@@ -102,7 +102,7 @@ export class JsonToFlattenedTsConverter {
 
     const interfaceBody = this.generateObjectBody(jsonData, 0).trim();
 
-    return `interface ${interfaceName} ${interfaceBody}`;
+    return `interface ${interfaceName} ${interfaceBody}`.replace(/\[]$/, '');
   }
 
   /**
@@ -128,7 +128,7 @@ export class JsonToFlattenedTsConverter {
       }
       // Use the first element's type as the representative for the whole array
       const elementType = this.getType(obj[0], indentLevel);
-      return elementType.endsWith('}') ? elementType : `${elementType}[]`;
+      return `${elementType}[]`;
     }
 
     // Handle primitives
