@@ -89,6 +89,14 @@ const argv = yargs(hideBin(process.argv))
     description: 'Do not generate the repository files.',
     type: 'boolean',
   })
+  .option('no-enums', {
+    description: 'Generate enum alternative (literals and unions)',
+    type: 'boolean',
+  })
+  .option('no-null-type', {
+    description: 'Omit null in type declaration for nullable column',
+    type: 'boolean',
+  })
   .default({
     host: 'localhost',
     port: 5432,
@@ -96,6 +104,8 @@ const argv = yargs(hideBin(process.argv))
     dirname: 'database',
     'no-diagram': false,
     'no-migrations': false,
+    'no-enums': false,
+    'no-null-type': false,
   })
   .parse();
 
@@ -143,18 +153,29 @@ async function readPassword () {
     dirname: argv.dirname,
     schemas: String(argv.schemas || '').split(',').filter(Boolean),
     tables: String(argv.tables || '').split(',').filter(Boolean),
+    generator: {
+      model: {},
+    },
   };
 
-  if ( argv['no-diagram'] ) {
-    config.diagram = false
+  if (argv['no-diagram']) {
+    config.diagram = false;
   }
 
-  if ( argv['no-migrations'] ) {
-    config.migrations = false
+  if (argv['no-migrations']) {
+    config.migrations = false;
   }
 
-  if ( argv['no-repositories'] ) {
-    config.repositories = false
+  if (argv['no-repositories']) {
+    config.repositories = false;
+  }
+
+  if (argv['no-enums']) {
+    config.generator.model.replaceEnumsWithTypes = true;
+  }
+
+  if (argv['no-null-type']) {
+    config.generator.model.addNullTypeForNullable = false;
   }
 
   const connectionString = `postgresql://${argv.user}:${password}@${argv.host}:${argv.port}/${argv.database}`;
