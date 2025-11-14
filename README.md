@@ -44,10 +44,11 @@ posquelize -h localhost -u postgres -d myapp_db -x --clean
 
 ### Required Parameters
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| 🗄️ `-d, --database <name>` | Target database name | `myapp_db` |
-| 👤 `-u, --user <username>` | Database username | `postgres` |
+| Option                         | Description                            | Example      |
+|--------------------------------|----------------------------------------|--------------|
+| 🌐 `-h, --host <address>`  | IP/Hostname for the database.                                | `localhost`  |
+| 🗄️ `-d, --database <name>`    | Target database name                   | `myapp_db`   |
+| 👤 `-u, --user <username>`     | Database username                      | `postgres`   |
 | 🔐 `-x, --password <password>` | Database password (or omit for prompt) | `mypassword` |
 
 ### Optional Parameters
