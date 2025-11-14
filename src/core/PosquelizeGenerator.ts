@@ -138,6 +138,7 @@ export default class PosquelizeGenerator {
         generator: {
           model: {
             addNullTypeForNullable: true,
+            replaceEnumsWithTypes: false,
           },
           enums: [],
         },
@@ -392,8 +393,7 @@ export default class PosquelizeGenerator {
     for (const columnInfo of columnsInfo) {
       const relation = tableData.relations.find((x) => x.source.column === columnInfo.name) ?? null;
 
-      this.modelGen.generateEnums(columnInfo, modTplVars, modelName);
-      this.modelGen.generateConfigurableEnums({columnInfo, vars: modTplVars, modelName});
+      this.modelGen.generateEnums(columnInfo, modTplVars);
 
       this.modelGen.generateInterfaces(columnInfo, modTplVars, interfacesVar);
       this.modelGen.generateFields({

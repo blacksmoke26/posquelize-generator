@@ -45,6 +45,9 @@ import StringHelper from '~/helpers/StringHelper';
 import TypeUtils from '~/classes/TypeUtils';
 import TableUtils from '~/classes/TableUtils';
 
+// formatters
+import EnumFormatter from '~/formatters/EnumFormatter';
+
 // types
 import {ForeignKey, Relationship, TableIndex} from '~/typings/utils';
 import {GeneratorOptions} from '~/typings/generator';
@@ -473,57 +476,29 @@ export default class ModelGenerator {
   };
 
   /**
-   * Generates TypeScript enum definitions for database columns with enum types
-   * Creates a named enum with PascalCase keys and documentation
+   * Generates TypeScript enum definitions for enum columns
+   * Handles both native database enums and configurable enum values
    *
-   * @function generateEnums
-   * @description Creates TypeScript enum definitions for database columns that
-   * use the ENUM type. The enum is named using the model name and column name
-   * in PascalCase, and includes JSDoc documentation.
-   *
-   * @param {ColumnInfo} columnInfo - Column information containing enum type parameters
-   * @param {ModelTemplateVars} vars - Template variables object to modify with generated enum
-   * @param {string} modelName - Name of the model (used to prefix the enum name)
+   * @param {ColumnInfo} columnInfo - Column information including type parameters and table name
+   * @param {ModelTemplateVars} vars - Template variables object to modify with generated enum definitions
    *
    * @public
    */
-  public generateEnums = (columnInfo: ColumnInfo, vars: ModelTemplateVars, modelName: string) => {
-    const values = SequelizeParser.parseEnums(columnInfo.sequelizeTypeParams);
-    if (!values.length) return;
+  public generateEnums (columnInfo: ColumnInfo, vars: ModelTemplateVars) {
+    let nativeEnums = SequelizeParser.parseEnums(columnInfo.sequelizeTypeParams);
 
-    vars.enums += sp(0, `\n/** Enum representing possible '%s' values for a '%s'. */\n`, columnInfo.name, singular(columnInfo.table));
-    vars.enums += sp(0, `export enum %s%s {\n`, modelName, pascalCase(columnInfo.name));
-    vars.enums += this.generateEnumValues(values);
-    vars.enums += sp(0, `}\n`);
+    if ( nativeEnums.length ) {
+      (new EnumFormatter({columnInfo, vars}, this.options)).process(nativeEnums);
+      return;
+    }
+
+    const configEnum = this.options.generator?.enums
+      ?.find?.(x => x.path === TableUtils.toFQNPath(columnInfo)) ?? null;
+
+    if (configEnum !== null) {
+      (new EnumFormatter({columnInfo, vars}, this.options)).process(configEnum.values);
+    }
   };
-
-  /**
-   * Generates TypeScript enum definitions for database columns with enum types
-   * Creates configurable named enums based on generator options
-   *
-   * @function generateConfigurableEnums
-   * @description Creates TypeScript enum definitions for database columns that
-   * use the ENUM type. The enum is named using the model name and column name
-   * in PascalCase, and includes JSDoc documentation. Supports configurable
-   * generation based on generator options.
-   *
-   * @param {Object} params - Parameters object containing column information and generation context
-   * @param {ColumnInfo} params.columnInfo - Column information containing enum type parameters
-   * @param {ModelTemplateVars} params.vars - Template variables object to modify with generated enum
-   * @param {string} params.modelName - Name of the model (used to prefix the enum name)
-   * @param {GeneratorOptions['generator']} params.generator - Generator options configuration
-   *
-   * @public
-   */
-  public generateConfigurableEnums(params: { columnInfo: ColumnInfo, vars: ModelTemplateVars, modelName: string }) {
-    const configEnum = this.options.generator?.enums?.find?.(x => x.path === TableUtils.toFQNPath(params.columnInfo)) ?? null;
-    if (configEnum === null) return;
-
-    params.vars.enums += sp(0, `\n/** Enum representing possible '%s' values for a '%s'. */\n`, params.columnInfo.name, singular(params.columnInfo.table));
-    params.vars.enums += sp(0, `export enum %s {\n`, StringHelper.toConfigurableEnumName(params.columnInfo.table, params.columnInfo.name));
-    params.vars.enums += this.generateEnumValues(configEnum.values);
-    params.vars.enums += sp(0, `}\n`);
-  }
 
   /**
    * Generates basic model configuration options
