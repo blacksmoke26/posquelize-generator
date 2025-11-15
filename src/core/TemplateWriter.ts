@@ -4,6 +4,7 @@
  * @see https://github.com/blacksmoke26
  */
 
+import fs from 'node:fs';
 import merge from 'deepmerge';
 
 // helpers
@@ -53,10 +54,16 @@ export default class TemplateWriter {
    * @param context - Data object passed to the template for variable substitution
    */
   public renderOut(template: string, outFile: string, context: Record<string, any> = {}): void {
-    const templateFile: string = FileHelper.join(FileHelper.dirname(__dirname, 1), 'templates', `${template}.njk`);
+    let templateFile = FileHelper.join(this.options?.templatesDir ?? '', `${template}.njk`);
+
+    if ( !fs.existsSync(templateFile)) {
+      templateFile = FileHelper.join(this.options?.templatesDir ?? '', `${template}.njk`);
+    }
+
     const text = NunjucksHelper.renderFile(templateFile, context, {
       autoescape: false,
     });
+
     FileHelper.saveTextToFile(outFile, text);
   }
 
