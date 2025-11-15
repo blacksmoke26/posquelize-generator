@@ -10,7 +10,7 @@
  Target Server Version : 170002 (170002)
  File Encoding         : 65001
 
- Date: 13/11/2025 23:31:19
+ Date: 15/11/2025 17:56:57
 */
 
 
@@ -156,16 +156,18 @@ CREATE TABLE "public"."products" (
   "guid_uuid" uuid,
   "tags_jsonba" jsonb DEFAULT '[{"name": "test"}]'::jsonb,
   "status" int2,
-  "visibility" varchar(30) COLLATE "pg_catalog"."default" DEFAULT 'public'::character varying
+  "visibility" varchar(30) COLLATE "pg_catalog"."default" DEFAULT 'public'::character varying,
+  "deleted_at" timestamp(0)
 )
 ;
 COMMENT ON COLUMN "public"."products"."run_at_time" IS 'Run at specific time';
 COMMENT ON COLUMN "public"."products"."letter_char" IS 'Letter type';
+COMMENT ON COLUMN "public"."products"."deleted_at" IS 'Deleted at';
 
 -- ----------------------------
 -- Records of products
 -- ----------------------------
-INSERT INTO "public"."products" VALUES (1, 'test', 2.00, '{}', '2025-10-26 18:50:10.846131', 'blocked', 't', 2.22, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, '7cf8c7b3-d0e7-42a8-ae7e-e059c4e30d8f', '[]', 10, 'public');
+INSERT INTO "public"."products" VALUES (1, 'test', 2.00, '{}', '2025-10-26 18:50:10.846131', 'blocked', 't', 2.22, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, '7cf8c7b3-d0e7-42a8-ae7e-e059c4e30d8f', '[]', 10, 'public', NULL);
 
 -- ----------------------------
 -- Table structure for tags
