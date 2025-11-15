@@ -501,28 +501,41 @@ export default class ModelGenerator {
   };
 
   /**
-   * Generates basic model configuration options
-   * Sets up sequelize instance, schema, and table name
+   * Generates basic model configuration options for a Sequelize model
+   * Sets up the database connection instance, schema, and table name
    *
    * @function generateBasicOptions
-   * @description Adds the fundamental configuration options for a Sequelize model,
-   * including the database connection instance, schema name, and table name.
-   * These are the minimum required options for any model definition.
+   * @description Adds the fundamental configuration options required for any Sequelize model definition.
+   * This includes setting up the database connection instance through getInstance(),
+   * specifying the database schema where the table resides, and configuring the table name.
+   * These options form the foundation of model configuration and are required for all models.
    *
-   * @param {ModelTemplateVars} modTplVars - Template variables object to modify with options
-   * @param {Object} options - Configuration containing schema and table names
-   * @param {string} options.schemaName - Database schema name
-   * @param {string} options.tableName - Database table name
+   * @param {ModelTemplateVars} modTplVars - Template variables object that will be modified with the generated options
+   * @param {Object} options - Configuration object containing the database schema and table information
+   * @param {string} options.schemaName - The name of the database schema where the table is located
+   * @param {string} options.tableName - The actual name of the database table being modeled
+   * @param {ColumnInfo[]} options.columnsInfo - Array containing information about all columns in the table (unused in this method but part of the options interface)
    *
    * @private
    */
   private generateBasicOptions = (
     modTplVars: ModelTemplateVars,
-    {schemaName, tableName}: { schemaName: string; tableName: string },
+    {schemaName, tableName, columnsInfo}: { schemaName: string; tableName: string; columnsInfo: ColumnInfo[] },
   ): void => {
     modTplVars.options += sp(4, `sequelize: getInstance(),\n`);
     modTplVars.options += sp(4, `schema: '%s',\n`, schemaName);
     modTplVars.options += sp(4, `tableName: '%s',\n`, tableName);
+
+    //region Defining a model as paranoid
+    const deletedColumn = columnsInfo.find(x => x.name.startsWith('delete')) ?? null;
+
+    if (deletedColumn) {
+      modTplVars.options += sp(4, `paranoid: true,\n`);
+
+      if (deletedColumn.propertyName !== 'deletedAt')
+        modTplVars.options += sp(4, `deletedAt: '%s',\n`, deletedColumn.propertyName);
+    }
+    //endregion
   };
 
   /**
@@ -566,17 +579,18 @@ export default class ModelGenerator {
    * configurations. The method delegates to helper methods for each option type.
    *
    * @param {ModelTemplateVars} modTplVars - Template variables object to modify with all options
-   * @param {Object} options - Complete configuration including schema, table, and timestamp settings
+   * @param {Object} options - Complete configuration including schema, table, timestamp settings, and column information
    * @param {string} options.schemaName - Database schema name
    * @param {string} options.tableName - Database table name
    * @param {boolean} options.hasCreatedAt - Whether to track creation timestamps
    * @param {boolean} options.hasUpdatedAt - Whether to track update timestamps
+   * @param {ColumnInfo[]} options.columnsInfo - Array of column information for the table
    *
    * @public
    */
   public generateOptions = (
     modTplVars: ModelTemplateVars,
-    options: { schemaName: string; tableName: string; hasCreatedAt: boolean; hasUpdatedAt: boolean },
+    options: { schemaName: string; tableName: string; hasCreatedAt: boolean; hasUpdatedAt: boolean; columnsInfo: ColumnInfo[] },
   ) => {
     this.generateBasicOptions(modTplVars, options);
     this.generateTimestampOptions(modTplVars, options);
