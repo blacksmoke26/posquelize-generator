@@ -1,0 +1,181 @@
+/**
+ * Configuration object for Posquelize code generation.
+ *
+ * This configuration defines the database connection settings, output directory,
+ * and various generation options for models, migrations, and other database artifacts.
+ */
+module.exports = {
+  /**
+   * Database connection configuration
+   * @type {Object}
+   * @property {string} host - The database host name or IP address (default: 'localhost')
+   * @property {string} username - The username for database authentication (default: 'postgres')
+   * @property {string} password - The password for database authentication
+   * @property {string} database - The name of the database to connect to (default: 'test_db')
+   * @property {number} port - The port to connect (default: 5432)
+   */
+  connection: {
+    host: 'localhost',
+    username: 'postgres',
+    password: '', // < set password
+    database: 'test_db',
+    port: 5432,
+  },
+
+  /**
+   * Directory where the generated files will be output
+   * @type {string}
+   */
+  //outputDir: __dirname + '/my_app',
+
+  /**
+   * Whether to clean the output directory before generating new files
+   * @type {boolean}
+   */
+  //cleanRootDir: true,
+
+  /**
+   * The name of the subdirectory where Sequelize files will be generated
+   * @type {string}
+   */
+  //dirname: 'database',
+
+  /**
+   * Array of specific database schemas to process (empty processes all)
+   * @type {string[]}
+   */
+  //schemas: [/*'public'*/],
+
+  /**
+   * Array of specific tables to generate models for (empty generates all)
+   * @type {string[]}
+   */
+  //tables: [/*'tags', 'products'*/],
+
+  /**
+   * Disable migrations completely
+   * @type {boolean}
+   */
+  //migrations: false,
+
+  /**
+   * Fine-grained configuration for migration file generation
+   * @type {Object}
+   */
+  //migrations: {
+    /**
+     * Whether to generate migration files for database indexes
+     * @type {boolean}
+     */
+    //indexes: true,
+    /**
+     * Whether to generate seeder files
+     * @type {boolean}
+     */
+    //seeders: true,
+    /**
+     * Whether to generate migration files for database functions
+     * @type {boolean}
+     */
+    //functions: true,
+    /**
+     * Whether to generate migration files for domain types
+     * @type {boolean}
+     */
+    //domains: true,
+    /**
+     * Whether to generate migration files for composite types
+     * @type {boolean}
+     */
+    //composites: true,
+    /**
+     * Whether to generate migration files for tables
+     * @type {boolean}
+     */
+    //tables: true,
+    /**
+     * Whether to generate migration files for views
+     * @type {boolean}
+     */
+    //views: true,
+    /**
+     * Whether to generate migration files for triggers
+     * @type {boolean}
+     */
+    //triggers: true,
+    /**
+     * Whether to generate migration files for foreign key constraints
+     * @type {boolean}
+     */
+    //foreignKeys: true
+    //},
+
+  /**
+   * Whether to generate DBML diagram files
+   * @type {boolean}
+   */
+  //diagram: false,
+
+  /**
+   * Whether to generate repository files
+   * @type {boolean}
+   */
+  //repositories: false,
+
+  /**
+   * Configuration options for the code generator
+   * @type {Object}
+   */
+  generator: {
+    /**
+     * Model-specific generation options
+     * @type {Object}
+     */
+    model: {
+      /**
+       * Whether to add null type for nullable properties in TypeScript definitions
+       * @type {boolean}
+       */
+      //addNullTypeForNullable: true,
+      /**
+       * Whether to replace enums with string union and object literal types in TypeScript definitions
+       * @type {boolean}
+       */
+      //replaceEnumsWithTypes: false,
+    },
+    /**
+     * Configuration for enum generation
+     * Allows generating enums for table columns instead of plain values
+     * @type {Object[]}
+     */
+    // enums: [{
+    //   /**
+    //    * Path to the column in format: schemaName.tableName.columnName
+    //    * @type {string}
+    //    */
+    //   path: 'public.products.status',
+    //   /**
+    //    * Key-value mapping of enum values
+    //    * @type {Object}
+    //    */
+    //   values: {active: 10, inactive: 5, deleted: 0, suspended: 3},
+    //   /**
+    //    * Default value for the enum
+    //    * @type {number}
+    //    */
+    //   defaultValue: 10,
+    // }, {
+    //   /**
+    //    * Path to the column in format: schemaName.tableName.columnName
+    //    * @type {string}
+    //    */
+    //   path: 'public.products.visibility',
+    //   /**
+    //    * Array of possible enum values
+    //    * @type {string[]}
+    //    */
+    //   values: ['public', 'private'],
+    //   // defaultValue: 'private', // Default Value is set in DDL
+    // }],
+  },
+};

@@ -10,21 +10,42 @@ Posquelize is a powerful CLI tool that automates the generation of Sequelize app
 
 ### Core Functionality
 
-- ✅ **Complete Model Generation**: Automatically creates Sequelize models, repositories, and TypeScript type definitions
-- 🔄 **Comprehensive Migration Support**: Generates migrations for tables, functions, domains, views, triggers, indexes, and foreign keys
-- 📊 **Advanced Type Support**: Handles custom/user-defined types (UDT) with automatic conversions
-- ⚡ **Visual Documentation**: Creates database ERD diagrams in DBML format
-- 🚀 **Selective Generation**: Filter by specific schemas or tables for targeted code generation
-- 🔍 **Smart Relationship Detection**: Automatically identifies and configures table relationships and associations
-- 📝 **Rich Type Definitions**: Generates TypeScript interfaces, enums, and JSONB prototypes
-- 🎯 **Production-Ready Boilerplate**: Creates a minimal but complete application structure
+- ✅ **Complete Model Generation**: Creates Sequelize models,
+  repositories, and TypeScript type definitions
+- 🔄 **Comprehensive Migration Support**: Generates migrations for
+  tables, functions, domains, views, triggers, indexes, and keys
+- 📊 **Advanced Type Support**: Handles custom user-defined types
+  with automatic conversions
+- ⚡ **Visual Documentation**: Creates database ER diagrams in DBML
+- 🚀 **Selective Generation**: Filter by schemas or tables for
+  targeted code generation
+- 🔍 **Smart Relationship Detection**: Identifies and configures
+  table relationships and associations
+- 📝 **Rich Type Definitions**: Generates TypeScript interfaces,
+  enums, and JSONB prototypes
+- 🎯 **Production-Ready Boilerplate**: Creates minimal but complete
+  application structure
+- 🛠️ **Enhanced Model Options**: Configurable model properties
+  including timestamps, paranoid mode
+- 🔧 **Advanced Migration Control**: Granular control over migration
+  generation with selective inclusion/exclusion options
+- 📋 **JSON Schema Support**: Generates JSON schemas for validation
+  and API documentation
+- 🏗️ **Composite Type Handling**: Support for PostgreSQL composite
+  types with automatic TypeScript interface generation
 
 ### Developer Experience
 
-- 🔐 **Secure Authentication**: Interactive password prompts to avoid sensitive data in command history
-- 📁 **Flexible Output**: Configurable output directory and Sequelize directory structure
-- 🧹 **Clean Generation**: Automatic directory cleanup with `--clean` option
-- 🎨 **Template Customization**: Support for custom output templates
+- 🔐 **Secure Authentication**: Interactive password prompts to avoid
+  sensitive data in command history
+- 📁 **Flexible Output**: Configurable output directory and
+  Sequelize directory structure
+- 🧹 **Clean Generation**: Automatic directory cleanup with `--clean`
+- 🎨 **Template Customization**: Support for custom output templates *(upcoming)*
+- ⚙️ **Configuration Files**: Advanced configuration via
+  posquelize.config.js for complex setups
+- 🚀 **Programmatic API**: Full TypeScript API for integration into
+  build pipelines and custom tools
 
 ## Quick Start
 
@@ -37,7 +58,13 @@ npm install -g posquelize
 ### Basic Usage
 
 ```bash
-posquelize -h localhost -u postgres -d myapp_db -x --clean
+posquelize -h localhost -u postgres -d myapp_db -x
+```
+
+For advanced usage and a complete list of all available options, run:
+
+```bash
+posquelize --help
 ```
 
 ## Configuration Options
@@ -46,26 +73,27 @@ posquelize -h localhost -u postgres -d myapp_db -x --clean
 
 | Option                         | Description                            | Example      |
 |--------------------------------|----------------------------------------|--------------|
-| 🌐 `-h, --host <address>`  | IP/Hostname for the database.                                | `localhost`  |
 | 🗄️ `-d, --database <name>`    | Target database name                   | `myapp_db`   |
 | 👤 `-u, --user <username>`     | Database username                      | `postgres`   |
 | 🔐 `-x, --password <password>` | Database password (or omit for prompt) | `mypassword` |
 
 ### Optional Parameters
 
-| Option                         | Description                                                   | Default    |
-|--------------------------------|---------------------------------------------------------------|------------|
-| 🔌 `-p, --port <port>`         | Database connection port                                      | `5432`     |
-| 📁 `-o, --output <directory>`  | Output directory path                                         | `./myapp`  |
-| 📂 `-n, --dirname <directory>` | Sequelize subdirectory name                                   | `database` |
-| 🧹 `--clean`                   | Clean output directory before generation                      | `false`    |
-| 🏗️ `--schemas <schemas>`      | Specific schemas to process (comma-separated)                 | `all`      |
-| 📋 `--tables <tables>`         | Specific tables to generate (comma-separated)                 | `all`      |
-| 📊 `--no-diagram`              | Skip [DBML](https://dbml.dbdiagram.io/) ER diagram generation | `false`    |
-| 📋 `--no-migrations`           | Skip migration files generation                               | `false`    |
-| 📦 `--no-repositories`         | Skip repository files generation                              | `false`    |
-| 🏷️ `--no-enums`               | Use alternative types (`literal` / `union`) instead of `enum` | `false`    |
-| 📋 `--no-null-type`           | Omit `null` in type declaration for nullable column           | `false`    |
+| Option                         | Description                                                            | Default     |
+|--------------------------------|------------------------------------------------------------------------|-------------|
+| 🌐 `-h, --host <address>`      | IP/Hostname for the database                                           | `localhost` |
+| 🔌 `-p, --port <port>`         | Database connection port                                               | `5432`      |
+| 📑 `-c, --config`              | Load `posquelize.config.js` configuration file from current directory. | `false`     |
+| 📁 `-o, --output <directory>`  | Output directory path                                                  | `./myapp`   |
+| 📂 `-n, --dirname <directory>` | Sequelize subdirectory name                                            | `database`  |
+| 🧹 `--clean`                   | Clean output directory before generation                               | `false`     |
+| 🏗️ `--schemas <schemas>`      | Specific schemas to process (comma-separated)                          | -           |
+| 📋 `--tables <tables>`         | Specific tables to generate (comma-separated)                          | -           |
+| 📊 `--no-diagram`              | Skip [DBML](https://dbml.dbdiagram.io/) ER diagram generation          | `false`     |
+| 📋 `--no-migrations`           | Skip migration files generation                                        | `false`     |
+| 📦 `--no-repositories`         | Skip repository files generation                                       | `false`     |
+| 🏷️ `--no-enums`               | Use alternative types (`literal` / `union`) instead of `enum`          | `false`     |
+| 📋 `--no-null-type`            | Omit `null` in type declaration for nullable column                    | `false`     |
 
 ## Usage Examples
 
@@ -93,7 +121,19 @@ posquelize -h localhost -u postgres -d myapp_db -x --tables users,posts,comments
 posquelize -h localhost -u postgres -d myapp_db -x -o ./my-sequelize-app --clean
 ```
 
+## Security Best Practices
+
+**⚠️ Security Alert**: Never include passwords directly in command-line arguments or scripts. Posquelize provides an interactive password prompt when the `-x` flag is used without a value, ensuring credentials don't appear in shell history or process lists.
+
 ## Generated Project Structure
+
+The tool generates a complete application structure with:
+
+- **TypeScript Models**: Fully typed models with validations
+- **Migration Scripts**: Version-controlled database schema changes
+- **Type Definitions**: Comprehensive TypeScript interfaces and types
+- **Relationship Maps**: Automatically configured associations
+- **Repository Pattern**: Abstraction layer for data access
 
 ```text
 myapp/
@@ -123,20 +163,72 @@ myapp/
              📝 models.d.ts
 ```
 
-## Security Best Practices
+## Configuration File
+To use a configuration file for more complex setups:
 
-**⚠️ Security Alert**: Never include passwords directly in command-line arguments or scripts. Posquelize provides an interactive password prompt when the `-x` flag is used without a value, ensuring credentials don't appear in shell history or process lists.
+1. Create a `posquelize.config.js` file in your project's root directory.
 
-## Generated Output Details
+   **Note**: If a config file doesn't exist, will be created in the current directory.
+2. Configure your options using the JavaScript configuration object.
+3. Run the generator with the `--use-config`.
 
-The tool generates a complete application structure with:
+```bash
+posquelize --use-config
+```
 
-- **TypeScript Models**: Fully typed models with validations
-- **Migration Scripts**: Version-controlled database schema changes
-- **Type Definitions**: Comprehensive TypeScript interfaces and types
-- **Relationship Maps**: Automatically configured associations
-- **Repository Pattern**: Abstraction layer for data access
+#### Available configuration via `posquelize.config.js` file:
 
+```javascript
+module.exports = {
+  connection: {             // Database connection configuration
+    host: 'localhost',      // Host name / IP
+    username: 'postgres',   // Username for database
+    password: '<password>', // The password
+    database: 'test_db',    // The database name
+    port: 5432,             // The port to connect
+  },
+
+  outputDir: __dirname + '/my_app', // Output directory
+  cleanRootDir: true,       // Clean output directory before generation
+  dirname: 'db',            // Sequelize subdirectory name
+
+  schemas: [/*'public'*/],  // Specific schemas to process
+  tables:  [/*'tags', 'products'*/], // Specific tables to generate
+
+  // Migration configuration
+  migrations: {
+    indexes: true,    // Generate index migrations
+    seeders: true,    // Generate seeder files
+    functions: true,  // Generate function migrations
+    domains: true,    // Generate domain migrations
+    composites: true, // Generate composite type migrations
+    tables: true,     // Generate table migrations
+    views: true,      // Generate view migrations
+    triggers: true,   // Generate trigger migrations
+    foreignKeys: true // Generate foreign key migrations
+  },
+
+  diagram: false,       // Skip DBML diagram generation
+  repositories: false,  // Skip repository file generation
+
+  generator: {
+    model: {
+      addNullTypeForNullable: true, // Controls whether nullable typed property
+      replaceEnumsWithTypes: false, // Replace enum with String Union types
+    },
+    // Configurable enums for table columns, (generate enums instead of plain value)
+    enums: [{
+      path: 'public.products.status', // schemaName.tableName.columnName
+      values: {active: 10, inactive: 5, deleted: 0, suspended: 3}, // key:value map
+      defaultValue: 10, // Default value to be set in init -> options -> column definition
+    }, {
+      path: 'public.products.visibility',
+      values: ['public', 'private'], // list of values
+      // defaultValue: 'private', // Default Value is set in DDL
+    }],
+  },
+};
+```
 
 ## Programmatic API
 
@@ -152,49 +244,14 @@ import { PosquelizeGenerator } from 'posquelize';
 const connectionString = 'postgresql://user:pass@localhost:5432/test_db';
 
 // Initialize the generator with connection string and output path
-const generator = new PosquelizeGenerator(connectionString, __dirname + '/myapp', {
+const posquelize = PosquelizeGenerator.create(connectionString, __dirname + '/myapp', {
   cleanRootDir: true, // Clean output directory before generation
 
-  // Optional configuration options (uncomment to use)
-  /*
-  dirname: 'db', // Sequelize subdirectory name
-  schemas: ['public'], // Specific schemas to process
-  tables: ['tags', 'brands', 'products'], // Specific tables to generate
-
-  // Migration configuration
-  migrations: {
-    indexes: true,    // Generate index migrations
-    seeders: true,    // Generate seeder files
-    functions: true,  // Generate function migrations
-    domains: true,    // Generate domain migrations
-    composites: true, // Generate composite type migrations
-    tables: true,     // Generate table migrations
-    views: true,      // Generate view migrations
-    triggers: true,   // Generate trigger migrations
-    foreignKeys: true // Generate foreign key migrations
-  },
-  generator: {
-    model: {
-      addNullTypeForNullable: true, // Controls whether nullable typed property
-      replaceEnumsWithTypes: false, // Replace enum with String Union / Object Literal types
-    },
-    enums: [{
-      path: 'public.products.status',
-      values: {active: 10, inactive: 5, deleted: 0, suspended: 3},
-      defaultValue: 10,
-    }, {
-      path: 'public.products.visibility',
-      values: ['public', 'private'],
-      // defaultValue: 'private', // Default Value is set in DDL
-    }],
-  },
-  diagram: false,       // Skip DBML diagram generation
-  repositories: false   // Skip repository file generation
-  */
+  // other configuration goes here
 });
 
 // Execute the generation process
-await generator.generate();
+await posquelize.generate();
 ```
 
 ### Advanced Configuration
@@ -214,13 +271,13 @@ const options: GeneratorOptions = {
     foreignKeys: true,
     indexes: false
   },
-  diagram: true,
+  diagram: false,
   repositories: true
 };
 
-const generator = new PosquelizeGenerator(connectionString, './output', options);
+const posquelize = PosquelizeGenerator.create(connectionString, './output', options);
 
-await generator.generate();
+await posquelize.generate();
 ```
 
 ### Error Handling
@@ -229,7 +286,7 @@ Always wrap the generation process in try-catch blocks to handle potential conne
 
 ```ts
 try {
-  await generator.generate();
+  await posquelize.generate();
   console.log('Database generation completed successfully!');
 } catch (error) {
   console.error('Generation failed:', error.message);

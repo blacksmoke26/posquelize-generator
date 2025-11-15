@@ -256,3 +256,23 @@ export interface GeneratorOptions {
    */
   repositories?: boolean;
 }
+
+/** Configuration file for generator  */
+export interface GenerateConfigFile extends GeneratorOptions {
+  /** Database connection configuration */
+  connection: {
+    /** Host name / IP address */
+    host: string;
+    /** Username for database */
+    username: string;
+    /** The password for database authentication */
+    password: string;
+    /** The database name */
+    database: string;
+    /** The port to connect */
+    port: number;
+  };
+
+  /** Output directory where generated files will be placed */
+  outputDir: string;
+}

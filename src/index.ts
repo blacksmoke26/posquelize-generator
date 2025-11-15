@@ -12,6 +12,6 @@
 import PosquelizeGenerator from '~/core/PosquelizeGenerator';
 
 // types
-import type { GeneratorOptions } from '~/typings/generator';
+import type {GeneratorOptions, GenerateConfigFile} from '~/typings/generator';
 
-export {PosquelizeGenerator, GeneratorOptions};
+export {PosquelizeGenerator, GeneratorOptions, GenerateConfigFile};

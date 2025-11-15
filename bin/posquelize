@@ -37,26 +37,27 @@ const argv = yargs(hideBin(process.argv))
     description: 'Database name.',
     type: 'string',
     alias: 'd',
-    demandOption: true
   })
   .option('user', {
     description: 'Username for database.',
     type: 'string',
     alias: 'u',
-    demandOption: true
   })
   .option('pass', {
     description: 'Password for database. If specified without providing a password, it will be requested interactively from the terminal.',
     alias: 'x',
-    demandOption: true
   })
   .option('port', {
     description: 'Port number for database',
     type: 'number',
     alias: 'p'
   })
+  .option('use-config', {
+    description: 'Use the configuration file (posquelize.config.js)',
+    type: 'boolean'
+  })
   .option('output', {
-    description: 'What directory to place the models.',
+    description: 'Relative directory to place the generated files.',
     type: 'string',
     alias: 'o'
   })
@@ -101,6 +102,8 @@ const argv = yargs(hideBin(process.argv))
     host: 'localhost',
     port: 5432,
     clean: false,
+    output: 'myapp',
+    'use-config': false,
     dirname: 'database',
     'no-diagram': false,
     'no-migrations': false,
@@ -131,6 +134,21 @@ async function readPassword () {
  * Main execution function
  */
 (async function () {
+  console.log(await figlet.text('Posquelize', { font: 'Slant' }) + `\n\n`);
+
+  if (argv['use-config']) {
+    const generator = await PosquelizeGenerator.createWithConfig(process.cwd());
+    if ( !generator ) return;
+
+    await generator.generate();
+    process.exit(1);
+  }
+
+  if ( !argv['user'] || !argv['database'] || !argv['pass']) {
+    console.log(`Missing required flags: --user, --password  and --database.`);
+    process.exit(1);
+  }
+
   let password;
   if (typeof argv.pass === 'boolean' && argv.pass) {
     password = await readPassword();
@@ -178,9 +196,11 @@ async function readPassword () {
     config.generator.model.addNullTypeForNullable = false;
   }
 
-  const connectionString = `postgresql://${argv.user}:${password}@${argv.host}:${argv.port}/${argv.database}`;
+  if (argv['config']) {
+    config.configFile = path.normalize(process.cwd() + '/posquelize.config.js');
+  }
 
-  console.log(await figlet.text('Posquelize Generator', { font: 'Slant' }));
+  const connectionString = `postgresql://${argv.user}:${password}@${argv.host}:${argv.port}/${argv.database}`;
 
   const generator = new PosquelizeGenerator(connectionString, dir, config);
   await generator.generate();
