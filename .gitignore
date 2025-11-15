@@ -146,3 +146,4 @@ dist
 
 src/repl*.*ts
 arena
+posquelize.config.js
