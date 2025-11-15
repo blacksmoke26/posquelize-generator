@@ -90,6 +90,6 @@ export default class ConfigHandler {
       username,
     });
 
-    return PosquelizeGenerator.create(connectionSting, this.getOptions().outputDir, this.getOptions());
+    return PosquelizeGenerator.create(connectionSting, this.getOptions().outputDir!, this.getOptions());
   }
 }
