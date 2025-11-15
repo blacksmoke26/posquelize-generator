@@ -83,7 +83,7 @@ posquelize --help
 |--------------------------------|------------------------------------------------------------------------|-------------|
 | 🌐 `-h, --host <address>`      | IP/Hostname for the database                                           | `localhost` |
 | 🔌 `-p, --port <port>`         | Database connection port                                               | `5432`      |
-| 📑 `-c, --config`              | Load `posquelize.config.js` configuration file from current directory. | `false`     |
+| 📑 `--use-config`              | Load `posquelize.config.js` configuration file from current directory. | `false`     |
 | 📁 `-o, --output <directory>`  | Output directory path                                                  | `./myapp`   |
 | 📂 `-n, --dirname <directory>` | Sequelize subdirectory name                                            | `database`  |
 | 🧹 `--clean`                   | Clean output directory before generation                               | `false`     |
