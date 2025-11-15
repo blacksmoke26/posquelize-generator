@@ -27,6 +27,7 @@ import StringHelper from '~/helpers/StringHelper';
 import DbUtils from '~/classes/DbUtils';
 import TemplateWriter from './TemplateWriter';
 import KnexClient from '~/classes/KnexClient';
+import ConfigHandler from '~/core/ConfigHandler';
 import MigrationGenerator, {MigrationOptions} from './MigrationGenerator';
 import RelationshipGenerator from './RelationshipGenerator';
 import TableColumns, {type ColumnInfo} from '~/classes/TableColumns';
@@ -107,18 +108,85 @@ export default class PosquelizeGenerator {
   };
 
   /**
-   * Creates a new instance of PosquelizeGenerator
-   * @param connectionString The database connection string
-   * @param rootDir The root directory where files will be generated
-   * @param options Optional configuration for the generator
+   * Initializes a new generator instance with the specified connection, output directory, and options.
+   * This constructor sets up the database connection and model generator for the generation process.
+   *
+   * @param connectionString - Database connection string (e.g., 'postgresql://user:pass@localhost/db')
+   * @param rootDir - Root directory path where all generated files will be placed
+   * @param options - Optional configuration settings for customizing the generation behavior
    */
-  constructor(
-    public readonly connectionString: string,
-    public readonly rootDir: string,
-    public readonly options: GeneratorOptions = {},
+  private constructor(
+    public connectionString: string,
+    public rootDir: string,
+    public options: GeneratorOptions = {},
   ) {
     this.knex = KnexClient.create(this.connectionString);
     this.modelGen = new ModelGenerator(this.getOptions());
+  }
+
+  /**
+   * Creates a new PosquelizeGenerator instance with the specified parameters.
+   * This is a factory method that provides a convenient way to create generator instances.
+   *
+   * @param connectionString - Database connection string (e.g., 'postgresql://user:pass@localhost/db')
+   * @param rootDir - Root directory path where all generated files will be placed
+   * @param options - Optional configuration settings for customizing the generation behavior
+   * @returns A new instance of PosquelizeGenerator initialized with the provided parameters
+   *
+   * @example
+   * ```typescript
+   * const generator = PosquelizeGenerator.create(
+   *   'postgresql://user:pass@localhost/mydb',
+   *   './src',
+   *   { schemas: ['public'], tables: ['users'] }
+   * );
+   * ```
+   */
+  public static create(
+    connectionString: string,
+    rootDir: string,
+    options: GeneratorOptions = {},
+  ) {
+    return new PosquelizeGenerator(connectionString, rootDir, options);
+  }
+
+  /**
+   * Creates a new generator instance from a configuration file (posquelize.config.js).
+   * This method provides an alternative way to initialize the generator by loading
+   * configuration settings from an external file rather than passing parameters directly.
+   *
+   * @param dirPath - Directory path containing the configuration file
+   * @returns A new instance of the generator initialized with config file settings
+   * @throws {Error} When the configuration file cannot be found or parsed
+   *
+   * @example
+   * ```typescript
+   * const generator = PosquelizeGenerator.createWithConfig('./project-root');
+   * await generator.generate();
+   * ```
+   *
+   * @note This is a placeholder implementation. In a complete implementation,
+   * this method would read and parse the configuration file to extract connection
+   * string, output directory, and generation options.
+   */
+  public static async createWithConfig(dirPath: string): Promise<PosquelizeGenerator | null> {
+    const configFile = FileHelper.join(dirPath, 'posquelize.config.js');
+
+    if (!fs.existsSync(configFile)) {
+      console.error('Configuration file not found: "posquelize.config.js"');
+      console.info('Creating a new configuration file in the current directory...');
+      TemplateWriter.renderOut('pos.config', configFile);
+      console.info('Please review and modify the configuration file, then run the command again.');
+      return null;
+    }
+
+    console.info('Loading configuration file: "posquelize.config.js"');
+    const handler = new ConfigHandler(configFile);
+    if (!(await handler.load())) {
+      return null;
+    }
+
+    return handler.createGenerator();
   }
 
   /**
