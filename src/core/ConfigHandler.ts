@@ -12,10 +12,9 @@
  * ```
  */
 
-import merge from 'deepmerge';
-
 // classes
 import KnexClient from '~/classes/KnexClient';
+import ConfigCombiner from '~/core/ConfigCombiner';
 import PosquelizeGenerator from '~/core/PosquelizeGenerator';
 
 // helpers
@@ -70,33 +69,9 @@ export default class ConfigHandler {
    * @returns {GenerateConfigFile} - The merged configuration object
    */
   private getOptions(): GenerateConfigFile {
-    return merge<GenerateConfigFile>(
-      {
-        connection: {
-          host: 'localhost',
-          username: 'postgres',
-          password: '',
-          database: 'test_db',
-          port: 5432,
-        },
-        outputDir: FileHelper.join(FileHelper.dirname(this.configFile), 'myapp'),
-        schemas: [],
-        tables: [],
-        dirname: 'database',
-        cleanRootDir: false,
-        diagram: true,
-        migrations: {},
-        repositories: true,
-        generator: {
-          model: {
-            replaceEnumsWithTypes: false,
-            addNullTypeForNullable: true,
-          },
-          enums: [],
-        },
-      },
-      this?.config ?? {},
-    );
+    return ConfigCombiner.withFileOptions({
+      outputDir: FileHelper.join(FileHelper.dirname(this.configFile), 'myapp'),
+    }, this?.config ?? {});
   }
 
   /**
