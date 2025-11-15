@@ -381,13 +381,14 @@ export default class PosquelizeGenerator {
     interfacesVar: { text: string },
     config: { anyModelName: string },
   ): Promise<void> {
-    const tableData = this.getTableData(tableName, schemaName);
+    const columnsInfo = await TableColumns.list(this.knex, tableName, schemaName);
+
+    const tableData = this.getTableData(tableName, schemaName, columnsInfo);
     const modelName = this.getModelName(tableName);
 
     this.updateInitializerVars(modelName, initTplVars);
     const modTplVars = this.modelGen.getModelTemplateVars({schemaName, modelName, tableName});
 
-    const columnsInfo = await TableColumns.list(this.knex, tableName, schemaName);
     const timestampInfo = this.getTimestampInfo(columnsInfo);
 
     this.processColumns(columnsInfo, tableData, modTplVars, modelName, interfacesVar);
@@ -407,13 +408,15 @@ export default class PosquelizeGenerator {
    * Filters the global database metadata to return only relevant data for the specified table.
    * @param tableName The name of the table
    * @param schemaName The schema name containing the table
+   * @param columnsInfo Array of column information
    * @returns Object containing table data
    */
-  private getTableData(tableName: string, schemaName: string) {
+  private getTableData(tableName: string, schemaName: string, columnsInfo: ColumnInfo[]) {
     return {
       relations: this.dbData.relationships.filter((x) => x.source.table === tableName) ?? [],
       indexes: this.dbData.indexes.filter((x) => x.table === tableName && x.schema === schemaName),
       foreignKeys: this.dbData.foreignKeys.filter((x) => x.tableName === tableName && x.schema === schemaName),
+      columnsInfo,
     };
   }
 
@@ -476,23 +479,34 @@ export default class PosquelizeGenerator {
   }
 
   /**
-   * Generates all model components including relations, options, indexes, and associations.
-   * Orchestrates the generation of all supplemental model code beyond basic fields.
-   * @param tableData Table-specific data including relations and indexes
-   * @param modTplVars Model template variables
-   * @param schemaName The schema name
-   * @param tableName The table name
-   * @param timestampInfo Timestamp column information
+   * Generates supplemental model components beyond basic field definitions.
+   * Creates all additional model code including relationships, configuration options,
+   * indexes, and Sequelize associations based on the table structure and metadata.
+   *
+   * This method coordinates the generation of:
+   * - Import statements for related models based on foreign key relationships
+   * - Sequelize model options including schema configuration and timestamp settings
+   * - Database index definitions for performance optimization
+   * - Association definitions for establishing model relationships
+   *
+   * @param tableData Object containing table metadata including relationships,
+   *                 indexes, and column information used for component generation
+   * @param modTplVars Template variables object that accumulates generated code
+   *                   components for the final model file
+   * @param schemaName Database schema name where the table resides
+   * @param tableName Name of the database table being processed
+   * @param timestampInfo Object indicating whether the table contains
+   *                      created_at and updated_at timestamp columns
    */
   private generateModelComponents(
-    tableData: { relations: Relationship[]; indexes: TableIndex[] },
+    tableData: { relations: Relationship[]; indexes: TableIndex[]; columnsInfo: ColumnInfo[] },
     modTplVars: ModelTemplateVars,
     schemaName: string,
     tableName: string,
     timestampInfo: { hasCreatedAt: boolean; hasUpdatedAt: boolean },
   ): void {
     this.modelGen.generateRelationsImports(tableData.relations, modTplVars);
-    this.modelGen.generateOptions(modTplVars, {schemaName, tableName, ...timestampInfo});
+    this.modelGen.generateOptions(modTplVars, {schemaName, tableName, ...timestampInfo, columnsInfo: tableData.columnsInfo});
     this.modelGen.generateIndexes(tableData.indexes, modTplVars);
     RelationshipGenerator.generateAssociations(tableData.relations, modTplVars, tableName);
   }
