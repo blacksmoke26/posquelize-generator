@@ -64,7 +64,19 @@ import type {ForeignKey, TableIndex} from '~/typings/utils';
  * @abstract This class cannot be instantiated directly as all methods are static utilities
  */
 export default class MigrationHandler {
+  /**
+   * Indicates whether the migration files should be generated in CommonJS format.
+   * This flag affects the indentation and module template used for generating migrations.
+   */
+  protected isCommonJs: boolean;
+
+  /**
+   * Creates a new MigrationHandler instance.
+   * @param writer - The template writer instance used for generating migration files
+   * @param options - Optional generator configuration options
+   */
   constructor(public readonly writer: TemplateWriter, public readonly options: GeneratorOptions = {}) {
+    this.isCommonJs = this.options.generator?.migration?.useCommonJs ?? false;
   }
 
   /**
@@ -85,6 +97,29 @@ export default class MigrationHandler {
   }
 
   /**
+   * Generates a string with the specified number of spaces, with additional spacing for CommonJS modules.
+   * This method wraps the `sp` utility function to provide consistent indentation across migration files,
+   * accounting for the different module formats (CommonJS vs ES modules).
+   * @param count - The base number of spaces to generate
+   * @param text - Optional text to append after the spaces
+   * @param args - Additional arguments for string formatting (passed to the underlying sp function)
+   * @returns A string containing the generated spaces and optional formatted text
+   * @example
+   * ```typescript
+   * // For ES modules (isCommonJs = false)
+   * migrationHandler.sp(2, 'hello %s', 'world')
+   * // Returns "  hello world"
+   *
+   * // For CommonJS modules (isCommonJs = true)
+   * migrationHandler.sp(2, 'hello %s', 'world')
+   * // Returns "    hello world" (2 extra spaces)
+   * ```
+   */
+  public sp(count: number, text: string, ...args: any[]): string {
+    return sp(count + (this.isCommonJs ? 2 : 0), text, ...args);
+  }
+
+  /**
    * Creates a migration file using a template with provided up and down migration content.
    * The migration content is trimmed of trailing whitespace before rendering.
    * @param fileName - Full path to the migration file to create
@@ -102,6 +137,7 @@ export default class MigrationHandler {
     this.writer.renderOut('migration-template', fileName, {
       up: variables.up?.trimEnd(),
       down: variables.down?.trimEnd(),
+      isCommonJs: this.isCommonJs,
     });
   }
 
@@ -142,13 +178,13 @@ export default class MigrationHandler {
    */
   private generateObjectMigrationVars(sql: string, dropStatement: string): { up: string; down: string } {
     const vars = MigrationFormatter.initVariables();
-    vars.up += sp(2, `await queryInterface.sequelize.query(\`\n`);
-    vars.up += sp(0, MigrationFormatter.formatSQL(sql) + `\n`);
-    vars.up += sp(2, '`);');
+    vars.up += this.sp(2, `await queryInterface.sequelize.query(\`\n`);
+    vars.up += this.sp(0, MigrationFormatter.formatSQL(sql) + `\n`);
+    vars.up += this.sp(2, '`);');
 
-    vars.down += sp(2, `await queryInterface.sequelize.query(\`\n`);
-    vars.down += sp(4, `${dropStatement}\n`);
-    vars.down += sp(2, `\`);`);
+    vars.down += this.sp(2, `await queryInterface.sequelize.query(\`\n`);
+    vars.down += this.sp(4, `${dropStatement}\n`);
+    vars.down += this.sp(2, `\`);`);
 
     return vars;
   }
@@ -322,7 +358,7 @@ export default class MigrationHandler {
    */
   private addFieldProperty(definition: string, columnInfo: ColumnInfo): string {
     if (columnInfo.propertyName !== columnInfo.name) {
-      definition += sp(6, `field: '%s',\n`, columnInfo.name);
+      definition += this.sp(6, `field: '%s',\n`, columnInfo.name);
     }
     return definition;
   }
@@ -350,19 +386,19 @@ export default class MigrationHandler {
 
     if (sequelizeType.startsWith('$QUOTE')) {
       sequelizeType = sequelizeType.replace('$QUOTE.', '');
-      definition += sp(6, `type: '%s', // PostgreSQL' Type.\n`, sequelizeType);
+      definition += this.sp(6, `type: '%s', // PostgreSQL' Type.\n`, sequelizeType);
     } else if (sequelizeType.startsWith('$COMMENT')) {
       const [ty, cm] = sequelizeType.replace('$COMMENT.', '').split('|');
-      definition += sp(6, `type: Sequelize.%s, // %s\n`, ty, cm);
+      definition += this.sp(6, `type: Sequelize.%s, // %s\n`, ty, cm);
     } else if (sequelizeType.startsWith('$RAW')) {
       const [x, y] = sequelizeType.replace('$RAW.', '').split('|');
       sequelizeType = x;
-      definition += sp(6, `type: '%s', // %s\n`, sequelizeType, y || 'PostgreSQL Type.');
+      definition += this.sp(6, `type: '%s', // %s\n`, sequelizeType, y || 'PostgreSQL Type.');
     } else {
       if (TypeUtils.isArray(columnInfo.type) || TypeUtils.isRange(columnInfo.type)) {
         sequelizeType = sequelizeType.replace('(', '(Sequelize.');
       }
-      definition += sp(6, `type: Sequelize.%s,\n`, sequelizeType);
+      definition += this.sp(6, `type: Sequelize.%s,\n`, sequelizeType);
     }
     return definition;
   }
@@ -384,10 +420,10 @@ export default class MigrationHandler {
    */
   private addPrimaryAndAutoIncrement(definition: string, columnInfo: ColumnInfo): string {
     if (columnInfo.flags.primary) {
-      definition += sp(6, `primaryKey: true,\n`);
+      definition += this.sp(6, `primaryKey: true,\n`);
     }
     if (columnInfo.flags.autoIncrement) {
-      definition += sp(6, `autoIncrement: true,\n`);
+      definition += this.sp(6, `autoIncrement: true,\n`);
     }
     return definition;
   }
@@ -407,7 +443,7 @@ export default class MigrationHandler {
    */
   private addComment(definition: string, columnInfo: ColumnInfo): string {
     if (columnInfo.comment) {
-      definition += sp(6, `comment: '%s',\n`, columnInfo.comment);
+      definition += this.sp(6, `comment: '%s',\n`, columnInfo.comment);
     }
     return definition;
   }
@@ -433,10 +469,10 @@ export default class MigrationHandler {
   private addDefaultValue(definition: string, columnInfo: ColumnInfo): string {
     if (columnInfo.defaultValue) {
       if (!TypeUtils.isDate(columnInfo.type)) {
-        definition += sp(6, `defaultValue: %s,\n`, columnInfo.defaultValue);
+        definition += this.sp(6, `defaultValue: %s,\n`, columnInfo.defaultValue);
       } else {
         if (columnInfo.defaultValueRaw?.startsWith?.('CURRENT_')) {
-          definition += sp(6, `defaultValue: Sequelize.literal('%s'),\n`, columnInfo.defaultValueRaw);
+          definition += this.sp(6, `defaultValue: Sequelize.literal('%s'),\n`, columnInfo.defaultValueRaw);
         }
       }
     }
@@ -456,7 +492,7 @@ export default class MigrationHandler {
    * ```
    */
   private generateColumnDefinition(columnInfo: ColumnInfo): string {
-    let definition = sp(4, `%s: {\n`, columnInfo.propertyName);
+    let definition = this.sp(4, `%s: {\n`, columnInfo.propertyName);
 
     definition = this.addFieldProperty(definition, columnInfo);
     definition = this.addTypeDefinition(definition, columnInfo);
@@ -464,8 +500,8 @@ export default class MigrationHandler {
     definition = this.addComment(definition, columnInfo);
     definition = this.addDefaultValue(definition, columnInfo);
 
-    definition += sp(6, `allowNull: %s,\n`, String(columnInfo.flags.nullable));
-    definition += sp(4, `},\n`);
+    definition += this.sp(6, `allowNull: %s,\n`, String(columnInfo.flags.nullable));
+    definition += this.sp(4, `},\n`);
 
     return definition;
   }
@@ -492,15 +528,15 @@ export default class MigrationHandler {
   ): Promise<void> {
     const {tableName, columnsInfo, schemaName} = params;
 
-    vars.up += sp(2, `await queryInterface.createTable({ schema: '%s', tableName: '%s' }, {\n`, schemaName, tableName);
-    vars.down += sp(2, `// drop '%s' table\n`, tableName);
-    vars.down += sp(2, `await queryInterface.dropTable({ schema: '%s', tableName: '%s' });\n`, schemaName, tableName);
+    vars.up += this.sp(2, `await queryInterface.createTable({ schema: '%s', tableName: '%s' }, {\n`, schemaName, tableName);
+    vars.down += this.sp(2, `// drop '%s' table\n`, tableName);
+    vars.down += this.sp(2, `await queryInterface.dropTable({ schema: '%s', tableName: '%s' });\n`, schemaName, tableName);
 
     for await (const columnInfo of columnsInfo) {
       vars.up += this.generateColumnDefinition(columnInfo);
     }
 
-    vars.up += sp(2, `});\n`);
+    vars.up += this.sp(2, `});\n`);
   }
 
   /**
@@ -520,16 +556,16 @@ export default class MigrationHandler {
     }
 
     vars.up += `\n`;
-    vars.up += sp(2, `// create table indexes\n`);
+    vars.up += this.sp(2, `// create table indexes\n`);
 
     for (const tableIndex of tableIndexes) {
       let indexDefinition = '';
 
       if (tableIndex.comment) {
-        indexDefinition += sp(2, `// ${tableIndex.comment}\n`);
+        indexDefinition += this.sp(2, `// ${tableIndex.comment}\n`);
       }
 
-      indexDefinition += sp(
+      indexDefinition += this.sp(
         2,
         `await queryInterface.addIndex({ schema: '%s', tableName: '%s' }, [%s], {\n`,
         tableIndex.schema,
@@ -537,17 +573,17 @@ export default class MigrationHandler {
         tableIndex.columns.map((x) => `'${x}'`).join(', '),
       );
 
-      indexDefinition += sp(4, `name: '%s',\n`, MigrationFormatter.escape(tableIndex.name));
+      indexDefinition += this.sp(4, `name: '%s',\n`, MigrationFormatter.escape(tableIndex.name));
 
       if (tableIndex.constraint === 'UNIQUE') {
-        indexDefinition += sp(4, `unique: true,\n`);
+        indexDefinition += this.sp(4, `unique: true,\n`);
       }
 
       if (tableIndex.type) {
-        indexDefinition += sp(4, `using: '%s',\n`, tableIndex.type);
+        indexDefinition += this.sp(4, `using: '%s',\n`, tableIndex.type);
       }
 
-      indexDefinition += sp(2, `});\n`);
+      indexDefinition += this.sp(2, `});\n`);
 
       vars.up += indexDefinition;
     }
@@ -569,9 +605,9 @@ export default class MigrationHandler {
       return;
     }
 
-    let indexedTextBytes = sp(2, `//  drop %s table indexes\n`, tableIndexes.length);
+    let indexedTextBytes = this.sp(2, `//  drop %s table indexes\n`, tableIndexes.length);
     for (const tableIndex of tableIndexes) {
-      indexedTextBytes += sp(2, `await queryInterface.removeIndex({ schema: '%s', tableName: '%s' }, '%s');\n`, tableIndex.schema, tableIndex.table, tableIndex.name);
+      indexedTextBytes += this.sp(2, `await queryInterface.removeIndex({ schema: '%s', tableName: '%s' }, '%s');\n`, tableIndex.schema, tableIndex.table, tableIndex.name);
     }
     vars.down = indexedTextBytes + `\n` + vars.down;
   }
@@ -591,38 +627,38 @@ export default class MigrationHandler {
     const vars = {up: '', down: ''};
 
     if (foreignKey.comment) {
-      vars.up += sp(2, `// %s\n`, foreignKey.comment);
+      vars.up += this.sp(2, `// %s\n`, foreignKey.comment);
     }
 
-    vars.up += sp(2, `await queryInterface.addConstraint({ schema: '%s', tableName: '%s' }, {\n`, foreignKey.schema, foreignKey.tableName);
-    vars.up += sp(4, `fields: ['%s'],\n`, foreignKey.columnName);
-    vars.up += sp(4, `type: 'foreign key',\n`);
-    vars.up += sp(4, `name: '%s',\n`, foreignKey.constraintName);
+    vars.up += this.sp(2, `await queryInterface.addConstraint({ schema: '%s', tableName: '%s' }, {\n`, foreignKey.schema, foreignKey.tableName);
+    vars.up += this.sp(4, `fields: ['%s'],\n`, foreignKey.columnName);
+    vars.up += this.sp(4, `type: 'foreign key',\n`);
+    vars.up += this.sp(4, `name: '%s',\n`, foreignKey.constraintName);
 
     if (foreignKey.defaultValue) {
-      vars.up += sp(4, `defaultValue: '%s',\n`, foreignKey.defaultValue);
+      vars.up += this.sp(4, `defaultValue: '%s',\n`, foreignKey.defaultValue);
     }
 
-    vars.up += sp(4, `references: {\n`);
-    vars.up += sp(6, `table: '%s',\n`, foreignKey.referenced.table);
-    vars.up += sp(6, `field: '%s',\n`, foreignKey.referenced.column);
-    vars.up += sp(4, `},\n`);
+    vars.up += this.sp(4, `references: {\n`);
+    vars.up += this.sp(6, `table: '%s',\n`, foreignKey.referenced.table);
+    vars.up += this.sp(6, `field: '%s',\n`, foreignKey.referenced.column);
+    vars.up += this.sp(4, `},\n`);
 
     if (foreignKey.rule.update) {
-      vars.up += sp(4, `onUpdate: '%s',\n`, foreignKey.rule.update);
+      vars.up += this.sp(4, `onUpdate: '%s',\n`, foreignKey.rule.update);
     }
 
     if (foreignKey.rule.delete) {
-      vars.up += sp(4, `onDelete: '%s',\n`, foreignKey.rule.delete);
+      vars.up += this.sp(4, `onDelete: '%s',\n`, foreignKey.rule.delete);
     }
 
     if (foreignKey.isDeferrable) {
-      vars.up += sp(4, `deferrable: true,\n`);
+      vars.up += this.sp(4, `deferrable: true,\n`);
     }
 
-    vars.up += sp(2, `});\n`);
+    vars.up += this.sp(2, `});\n`);
 
-    vars.down += sp(
+    vars.down += this.sp(
       2,
       `await queryInterface.removeConstraint({ schema: '%s', tableName: '%s' }, '%s');\n`,
       foreignKey.schema,

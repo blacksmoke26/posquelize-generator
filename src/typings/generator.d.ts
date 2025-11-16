@@ -169,6 +169,46 @@ export interface GeneratorOptions {
        */
       defaultValue?: string | number;
     }>,
+    /**
+     * Configuration options for migration file generation. These settings control
+     * how database migration files are created and formatted, allowing for
+     * customization of the migration output to match specific project requirements
+     * and build environments.
+     */
+    migration?: {
+      /**
+       * Determines whether migration files should be generated using CommonJS module
+       * syntax instead of ECMAScript modules (ESM). This option is particularly useful
+       * for maintaining compatibility with older Node.js environments or build systems
+       * that rely on CommonJS for their module loading mechanism.
+       *
+       * When enabled (true):
+       * - Files will use require() for imports
+       * - Exports will use module.exports
+       * - Generated files will have .js extension with CommonJS syntax
+       *
+       * When disabled (false):
+       * - Files will use ES6 import/export syntax
+       * - Generated files will use ESM module format
+       * - Better compatibility with modern TypeScript configurations
+       *
+       * This setting affects only the syntax of generated migration files and does
+       * not impact the actual migration functionality or database operations.
+       *
+       * @default false
+       * @example
+       * // CommonJS output (useCommonJs: true)
+       * module.exports = {
+       *   up: async (queryInterface, Sequelize) => { ... },
+       *   down: async (queryInterface, Sequelize) => { ... }
+       * };
+       *
+       * // ESM output (useCommonJs: false)
+       * export async function up (queryInterface, Sequelize) { ... },
+       * export async function down (queryInterface, Sequelize) { ... },
+       */
+      useCommonJs?: boolean;
+    },
   };
 
   /**

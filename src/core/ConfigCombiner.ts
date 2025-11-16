@@ -66,6 +66,9 @@ export default abstract class ConfigCombiner {
             replaceEnumsWithTypes: false,
           },
           enums: [],
+          migration: {
+            useCommonJs: false,
+          }
         },
       },
       ...options,

@@ -65,7 +65,7 @@ export default class TemplateWriter {
       autoescape: false,
     });
 
-    FileHelper.saveTextToFile(outFile, text);
+    FileHelper.saveTextToFile(outFile, text.trimEnd() + `\n`);
   }
 
   /**

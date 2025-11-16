@@ -261,7 +261,7 @@ export default class MigrationGenerator {
     const fkVars = MigrationFormatter.initVariables();
     this.handler.generateForeignKeys(this.data.foreignKeys, fkVars);
 
-    const fileName = this.handler.createFilename(config.outDir, `create_create-foreign-keys`, config.getTime());
+    const fileName = this.handler.createFilename(config.outDir, `create-foreign-keys`, config.getTime());
     console.log('Generated FK migration:', fileName);
     this.handler.createFile(fileName, fkVars);
   }

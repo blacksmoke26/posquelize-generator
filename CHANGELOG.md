@@ -1,5 +1,9 @@
-
 # ChangeLog
+
+## v0.0.3 - 2025-11-XX
+
+### feat
+* Add support for CommonJS migration ([PR-18](https://github.com/blacksmoke26/posquelize/pull/18))
 
 ## v0.0.2 - 2025-11-16
 
@@ -37,7 +41,6 @@
 * Add a utility class to convert JSON objects into TypeScript interfaces with support for nested structures, arrays, and circular references ([27b71e5](http://github.com/blacksmoke26/posquelize-generator/commit/27b71e5))
 * Add JSON to flattened TypeScript converter ([fbc174d](http://github.com/blacksmoke26/posquelize-generator/commit/fbc174d))
 
-
 ### fix
 
 * Change migrations option to object Update `migrations` configuration from boolean to object to support advanced migration settings. ([3c02a78](http://github.com/blacksmoke26/posquelize-generator/commit/3c02a78))
@@ -47,16 +50,13 @@
 * Remove await from jsonToInterface call ([ec1a529](http://github.com/blacksmoke26/posquelize-generator/commit/ec1a529))
 * Return default interfaces on invalid input instead of errors ([0be83a8](http://github.com/blacksmoke26/posquelize-generator/commit/0be83a8))
 
-
 ### docs
 
 * Add documentation for the Posquelize programmatic API, including basic usage, advanced configuration options, and error handling examples. This enables developers to integrate database generation into their applications with fine-grained control over output and configuration. ([a6f8de9](http://github.com/blacksmoke26/posquelize-generator/commit/a6f8de9))
 
-
 ### style
 
 * Add space before asterisks in comments ([00d0e7f](http://github.com/blacksmoke26/posquelize-generator/commit/00d0e7f))
-
 
 ### refactor
 
@@ -72,8 +72,6 @@
 * Fix indentation issues and remove prettier formatting from json to ts converters ([7192980](http://github.com/blacksmoke26/posquelize-generator/commit/7192980))
 * Make JSON to TypeScript conversion asynchronous ([9eb2a11](http://github.com/blacksmoke26/posquelize-generator/commit/9eb2a11))
 
-
 ### ci
 
 * Update dependencies (remove json-ts, add prettier) ([bad671f](http://github.com/blacksmoke26/posquelize-generator/commit/bad671f))
-
