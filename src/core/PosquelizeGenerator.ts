@@ -604,7 +604,7 @@ export default class PosquelizeGenerator {
 
     // Write models initializer file
     const fileName = FileHelper.join(this.getBaseDir('models'), 'index.ts');
-    (new TemplateWriter({})).renderOut('models-initializer', fileName, initTplVars);
+    this.writer.renderOut('models-initializer', fileName, initTplVars);
     console.log('Models Initializer generated:', fileName);
 
     await Promise.all([
