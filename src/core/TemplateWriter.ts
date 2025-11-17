@@ -12,6 +12,7 @@ import FileHelper from '~/helpers/FileHelper';
 import NunjucksHelper from '~/helpers/NunjucksHelper';
 
 // classes
+import CodeFile from '~/objects/CodeFile';
 import KnexClient from '~/classes/KnexClient';
 import DbmlDiagramExporter from './DbmlDiagramExporter';
 
@@ -63,9 +64,9 @@ export default class TemplateWriter {
 
     const text = NunjucksHelper.renderFile(templateFile, context, {
       autoescape: false,
-    });
+    }).trimEnd() + `\n`;
 
-    FileHelper.saveTextToFile(outFile, text.trimEnd() + `\n`);
+    (new CodeFile(outFile, text, this.options)).save();
   }
 
   /**
@@ -156,7 +157,10 @@ export default class TemplateWriter {
   public writeRepoFile(baseDir: string, modelName: string, mainDir: string): void {
     const fileName = FileHelper.join(baseDir, 'repositories', `${modelName}Repository.ts`);
     this.renderOut('repo-template', fileName, {modelName, dirname: mainDir});
-    console.log('Repository generated:', fileName);
+
+    if (!this.options.dryRun) {
+      console.log('Repository generated:', fileName);
+    }
   }
 
   /**
