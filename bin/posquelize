@@ -102,18 +102,16 @@ const argv = yargs(hideBin(process.argv))
     description: 'Omit null in type declaration for nullable column',
     type: 'boolean',
   })
+  .option('dry-run', {
+    description: 'Preview changes in terminal instead of writing on the disk',
+    type: 'boolean',
+  })
   .default({
     host: 'localhost',
     port: 5432,
     output: 'myapp',
     dirname: 'database',
     clean: false,
-    'use-config': false,
-    'no-diagram': false,
-    'extract-templates': false,
-    'no-migrations': false,
-    'no-enums': false,
-    'no-null-type': false,
   })
   .parse();
 
@@ -141,14 +139,14 @@ async function readPassword () {
 (async function () {
   console.log(await figlet.text('Posquelize', { font: 'Slant' }) + `\n\n`);
 
-  if (argv['extract-templates']) {
-    const destDir = path.normalize(process.cwd() + '/templates')
+  if (Object.hasOwn(argv, 'extract-templates')) {
+    const destDir = path.normalize(process.cwd() + '/templates');
     const srcDir = path.normalize(__dirname + '/../lib/templates');
 
     if (!fs.existsSync(destDir)) fs.mkdirSync(destDir);
 
     try {
-      fs.cpSync(srcDir, destDir, {recursive: true});
+      fs.cpSync(srcDir, destDir, { recursive: true });
       console.log('Notice: Templates has been copied to `/templates` directory.');
     } catch (e) {
       console.log('Failed to copy templates due to ' + e.message);
@@ -156,7 +154,7 @@ async function readPassword () {
     return;
   }
 
-  if (argv['use-config']) {
+  if (Object.hasOwn(argv, 'use-config')) {
     const generator = await PosquelizeGenerator.createWithConfig(process.cwd());
     if (!generator) return;
 
@@ -194,30 +192,27 @@ async function readPassword () {
     generator: {
       model: {},
     },
+    dryRun: Object.hasOwn(argv, 'dry-run'),
   };
 
-  if (argv['no-diagram']) {
+  if (Object.hasOwn(argv, 'no-diagram')) {
     config.diagram = false;
   }
 
-  if (argv['no-migrations']) {
+  if (Object.hasOwn(argv, 'no-migrations')) {
     config.migrations = false;
   }
 
-  if (argv['no-repositories']) {
+  if (Object.hasOwn(argv, 'no-repositories')) {
     config.repositories = false;
   }
 
-  if (argv['no-enums']) {
+  if (Object.hasOwn(argv, 'no-enums')) {
     config.generator.model.replaceEnumsWithTypes = true;
   }
 
-  if (argv['no-null-type']) {
+  if (Object.hasOwn(argv, 'no-null-type')) {
     config.generator.model.addNullTypeForNullable = false;
-  }
-
-  if (argv['config']) {
-    config.configFile = path.normalize(process.cwd() + '/posquelize.config.js');
   }
 
   const connectionString = `postgresql://${argv.user}:${password}@${argv.host}:${argv.port}/${argv.database}`;

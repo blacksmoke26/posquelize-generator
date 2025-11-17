@@ -315,6 +315,29 @@ export interface GeneratorOptions {
 
   // Path to directory containing custom templates for code generation
   templatesDir?: string;
+
+  /**
+   * Controls whether to display a preview of changes without actually writing files to disk.
+   * When enabled, the generator will output the diff of what would be generated,
+   * allowing you to review the changes before committing them to the file system.
+   *
+   * This is particularly useful for:
+   * - Previewing generation results before making changes
+   * - Debugging configuration issues
+   * - Validating template modifications
+   * - Reviewing generated code in CI/CD pipelines
+   *
+   * @default false
+   * @example
+   * ```typescript
+   * // Enable dry run to preview changes
+   * { dryRun: true }
+   *
+   * // Normal operation (default)
+   * { dryRun: false }
+   * ```
+   */
+  dryRun?: boolean;
 }
 
 /** Configuration file for generator  */

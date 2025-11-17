@@ -521,7 +521,10 @@ export default class PosquelizeGenerator {
   private writeModelFile(modelName: string, modTplVars: ModelTemplateVars): void {
     const fileName = FileHelper.join(this.getBaseDir('models'), `${modelName}.ts`);
     this.writer.renderOut('model-template', fileName, {...modTplVars, dirname: this.getOptions().dirname});
-    console.log('Model generated:', fileName);
+
+    if (!this.options.dryRun) {
+      console.log('Model generated:', fileName);
+    }
   }
 
   /**
