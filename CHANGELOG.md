@@ -2,13 +2,19 @@
 
 ## v0.0.3 - 2025-11-XX
 
-### feat
+### features
+
 * Dry run mode ([PR-19](https://github.com/blacksmoke26/posquelize/pull/19))
 * Add support for CommonJS migration ([PR-18](https://github.com/blacksmoke26/posquelize/pull/18))
 
+### enhancements
+
+* Replaced TypeScript Converter files with `@junaidatari/json2ts`
+  dependency, New database scripts (multiple sample schemas). ([PR-20](https://github.com/blacksmoke26/posquelize/pull/20))
+
 ## v0.0.2 - 2025-11-16
 
-### feat
+### features
 * Customized Nunjucks templates ([PR-16](https://github.com/blacksmoke26/posquelize/pull/16))
 * Paranoid Mode ([PR-14](https://github.com/blacksmoke26/posquelize/pull/14))
 * Configuration file support `posquelize.config.js` ([PR-13](https://github.com/blacksmoke26/posquelize/pull/13))
@@ -25,7 +31,7 @@
 
 ## v0.0.1 - 2025-11-12
 
-### feat
+### features
 
 * Add `--no-repositories` CLI flag to skip repository file generation and update config import path. Fixes issue with repository generation logic in filtering workflows. ([26c152d](http://github.com/blacksmoke26/posquelize-generator/commit/26c152d))
 * Add generator options typings for migrations, diagrams, and repositories ([b4f7fbc](http://github.com/blacksmoke26/posquelize-generator/commit/b4f7fbc))
@@ -42,7 +48,7 @@
 * Add a utility class to convert JSON objects into TypeScript interfaces with support for nested structures, arrays, and circular references ([27b71e5](http://github.com/blacksmoke26/posquelize-generator/commit/27b71e5))
 * Add JSON to flattened TypeScript converter ([fbc174d](http://github.com/blacksmoke26/posquelize-generator/commit/fbc174d))
 
-### fix
+### fixes
 
 * Change migrations option to object Update `migrations` configuration from boolean to object to support advanced migration settings. ([3c02a78](http://github.com/blacksmoke26/posquelize-generator/commit/3c02a78))
 * 5a870b7 (origin/develop) Merge pull request #3 from blacksmoke26/fix/broken-filtering ([5a870b7](http://github.com/blacksmoke26/posquelize-generator/commit/5a870b7))
