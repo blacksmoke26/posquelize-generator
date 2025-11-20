@@ -38,7 +38,7 @@ module.exports = {
    * The name of the subdirectory where Sequelize files will be generated
    * @type {string}
    */
-  //dirname: 'database',
+  //dirname: 'db',
 
   /**
    * Array of specific database schemas to process (empty processes all)
@@ -62,7 +62,7 @@ module.exports = {
    * Fine-grained configuration for migration file generation
    * @type {Object}
    */
-  //migrations: {
+  migrations: {
     /**
      * Whether to generate migration files for database indexes
      * @type {boolean}
@@ -108,7 +108,7 @@ module.exports = {
      * @type {boolean}
      */
     //foreignKeys: true
-    //},
+  },
 
   /**
    * Whether to generate DBML diagram files
@@ -154,6 +154,62 @@ module.exports = {
        * @type {boolean}
        */
       //replaceEnumsWithTypes: false,
+      /**
+       * Configuration options for naming conventions used in code generation.
+       * Controls how models, properties, and files are named to match
+       * specific project coding standards and preferences.
+       */
+      naming: {
+        /**
+         * The naming convention for generated model class names.
+         * Controls the case transformation applied to model identifiers.
+         * @type {'camel' | 'lower_snake' | 'original' | 'pascal' | 'upper_snake'}
+         * @default 'pascal'
+         */
+        model: 'pascal',
+        /**
+         * The naming convention for generated property names within models.
+         * Controls the case transformation applied to class properties.
+         * @type {'camel' | 'lower_snake' | 'original' | 'pascal' | 'upper_snake'}
+         * @default 'camel'
+         */
+        property: 'camel',
+        /**
+         * The naming convention for generated file names.
+         * Controls the case transformation applied to output file names.
+         * @type {'camel' | 'lower_snake' | 'original' | 'pascal' | 'upper_snake' | 'kebab'}
+         * @default 'pascal'
+         */
+        file: 'pascal',
+        /**
+         * Controls whether model and file names should be singularized when generated
+         * from plural table names. This option affects the naming convention for both
+         * the TypeScript model class names and their corresponding file names.
+         *
+         * When set to 'singular', table names in plural form (e.g., 'users', 'orders')
+         * will be converted to singular form for the model (e.g., 'User', 'Order').
+         * This follows common ORM conventions where a model represents a single entity.
+         *
+         * When set to 'plural', the original plural table names are preserved in the
+         * model class names (e.g., 'Users', 'Orders'). This can be useful when working
+         * with APIs or systems that consistently use plural naming.
+         *
+         * When set to 'original', the table names are used as-is without any singular
+         * or plural transformation, preserving the exact database table naming.
+         *
+         * This option works in conjunction with the 'model' and 'file' naming convention
+         * settings to determine the final output names.
+         *
+         * @type {'singular' | 'plural' | 'original'}
+         * @default 'singular'
+         * @example
+         * // For table name 'users'
+         * singularizeModel: 'singular'  // Generates: class User, file User.ts
+         * singularizeModel: 'plural'    // Generates: class Users, file Users.ts
+         * singularizeModel: 'original'  // Generates: class users, file users.ts
+         */
+        singularizeModel: 'singular',
+      },
     },
     /**
      * Configuration for enum generation
