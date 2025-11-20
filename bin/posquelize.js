@@ -228,6 +228,8 @@ function toSigularize (alias) {
     return;
   }
 
+  const dir = !argv.noWrite && (argv.output || path.resolve(process.cwd() + '/myapp'));
+
   /** @type {import('../index').GeneratorOptions}  */
   const config = {
     cleanRootDir: argv.clean,
@@ -273,7 +275,7 @@ function toSigularize (alias) {
   }
 
   if (Object.hasOwn(argv, 'use-config')) {
-    const generator = await PosquelizeGenerator.createWithConfig(process.cwd(), config);
+    const generator = await PosquelizeGenerator.createWithConfig(process.cwd(), { ...config, outputDir: dir });
     if (!generator) return;
 
     await generator.generate();
@@ -292,8 +294,6 @@ function toSigularize (alias) {
     console.warn('Warning: using a password on the command line interface can be insecure.');
     password = argv.pass;
   }
-
-  const dir = !argv.noWrite && (argv.output || path.resolve(process.cwd() + '/myapp'));
 
   try {
     fs.mkdirSync(dir, { recursive: true });

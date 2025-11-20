@@ -44,7 +44,7 @@ import ModelGenerator, {InitTemplateVars, ModelTemplateVars, sp} from './ModelGe
 // types
 import type {Knex} from 'knex';
 import type {ForeignKey, Relationship, TableIndex} from '~/typings/utils';
-import type {GeneratorOptions} from '~/typings/generator';
+import type {GenerateConfigFile, GeneratorOptions} from '~/typings/generator';
 import type {FileComparison} from '~/typings/multi-diff';
 
 /**
@@ -259,7 +259,7 @@ export default class PosquelizeGenerator {
    *       create a template configuration file and return null, prompting the user
    *       to review and modify the configuration before running again.
    */
-  public static async createWithConfig(dirPath: string, options: GeneratorOptions = {}): Promise<PosquelizeGenerator | null> {
+  public static async createWithConfig(dirPath: string, options: Partial<GenerateConfigFile> = {}): Promise<PosquelizeGenerator | null> {
     const configFile = FileHelper.join(dirPath, 'posquelize.config.js');
 
     if (!fs.existsSync(configFile)) {
