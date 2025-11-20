@@ -228,35 +228,6 @@ function toSigularize (alias) {
     return;
   }
 
-  if (Object.hasOwn(argv, 'use-config')) {
-    const generator = await PosquelizeGenerator.createWithConfig(process.cwd());
-    if (!generator) return;
-
-    await generator.generate();
-    process.exit(1);
-  }
-
-  if (!argv['user'] || !argv['database'] || !argv['pass']) {
-    console.error('Missing required arguments. Use --help for usage information.');
-    process.exit(1);
-  }
-
-  let password;
-  if (typeof argv.pass === 'boolean' && argv.pass) {
-    password = await readPassword();
-  } else if (typeof argv.pass === 'string') {
-    console.warn('Warning: using a password on the command line interface can be insecure.');
-    password = argv.pass;
-  }
-
-  const dir = !argv.noWrite && (argv.output || path.resolve(process.cwd() + '/myapp'));
-
-  try {
-    fs.mkdirSync(dir, { recursive: true });
-  } catch {
-    // do nothing
-  }
-
   /** @type {import('../index').GeneratorOptions}  */
   const config = {
     cleanRootDir: argv.clean,
@@ -299,6 +270,35 @@ function toSigularize (alias) {
 
   if (Object.hasOwn(argv, 'no-null-type')) {
     config.generator.model.addNullTypeForNullable = false;
+  }
+
+  if (Object.hasOwn(argv, 'use-config')) {
+    const generator = await PosquelizeGenerator.createWithConfig(process.cwd(), config);
+    if (!generator) return;
+
+    await generator.generate();
+    process.exit(1);
+  }
+
+  if (!argv['user'] || !argv['database'] || !argv['pass']) {
+    console.error('Missing required arguments. Use --help for usage information.');
+    process.exit(1);
+  }
+
+  let password;
+  if (typeof argv.pass === 'boolean' && argv.pass) {
+    password = await readPassword();
+  } else if (typeof argv.pass === 'string') {
+    console.warn('Warning: using a password on the command line interface can be insecure.');
+    password = argv.pass;
+  }
+
+  const dir = !argv.noWrite && (argv.output || path.resolve(process.cwd() + '/myapp'));
+
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+  } catch {
+    // do nothing
   }
 
   const connectionString = `postgresql://${argv.user}:${password}@${argv.host}:${argv.port}/${argv.database}`;

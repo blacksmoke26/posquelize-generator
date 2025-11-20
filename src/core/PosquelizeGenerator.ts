@@ -222,24 +222,44 @@ export default class PosquelizeGenerator {
 
   /**
    * Creates a new generator instance from a configuration file (posquelize.config.js).
-   * This method provides an alternative way to initialize the generator by loading
-   * configuration settings from an external file rather than passing parameters directly.
+   * This static method provides an alternative initialization approach by loading
+   * configuration settings from an external JavaScript file instead of passing
+   * parameters directly to the constructor.
    *
-   * @param dirPath - Directory path containing the configuration file
-   * @returns A new instance of the generator initialized with config file settings
-   * @throws {Error} When the configuration file cannot be found or parsed
+   * The configuration file should export connection details, output directory,
+   * and generation options in the expected format. This method will:
+   * - Locate the configuration file in the specified directory
+   * - Parse and validate the configuration settings
+   * - Create and return a new generator instance with those settings
+   * - Generate a default configuration file if one doesn't exist
+   *
+   * @param dirPath - Directory path containing the posquelize.config.js file
+   * @param options - Optional additional options to merge with config file settings
+   * @returns Promise resolving to a new PosquelizeGenerator instance, or null if
+   *          configuration loading fails or the config file needs to be created
+   * @throws {Error} When the configuration file exists but cannot be parsed or
+   *                  contains invalid settings
    *
    * @example
    * ```typescript
-   * const generator = PosquelizeGenerator.createWithConfig('./project-root');
-   * await generator.generate();
+   * // Basic usage with default config file location
+   * const generator = await PosquelizeGenerator.createWithConfig('./project-root');
+   * if (generator) {
+   *   await generator.generate();
+   * }
+   *
+   * // With additional options to override config file settings
+   * const generator = await PosquelizeGenerator.createWithConfig('./project-root', {
+   *   schemas: ['public'],
+   *   tables: ['users', 'posts']
+   * });
    * ```
    *
-   * @note This is a placeholder implementation. In a complete implementation,
-   * this method would read and parse the configuration file to extract connection
-   * string, output directory, and generation options.
+   * @note If the configuration file doesn't exist, this method will automatically
+   *       create a template configuration file and return null, prompting the user
+   *       to review and modify the configuration before running again.
    */
-  public static async createWithConfig(dirPath: string): Promise<PosquelizeGenerator | null> {
+  public static async createWithConfig(dirPath: string, options: GeneratorOptions = {}): Promise<PosquelizeGenerator | null> {
     const configFile = FileHelper.join(dirPath, 'posquelize.config.js');
 
     if (!fs.existsSync(configFile)) {
@@ -251,7 +271,7 @@ export default class PosquelizeGenerator {
     }
 
     console.info('Loading configuration file: "posquelize.config.js"');
-    const handler = new ConfigHandler(configFile);
+    const handler = new ConfigHandler(configFile, options);
     if (!(await handler.load())) {
       return null;
     }

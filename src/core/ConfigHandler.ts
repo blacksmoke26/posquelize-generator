@@ -21,7 +21,7 @@ import PosquelizeGenerator from '~/core/PosquelizeGenerator';
 import FileHelper from '~/helpers/FileHelper';
 
 // types
-import type { GenerateConfigFile } from '~/typings/generator';
+import type {GenerateConfigFile, GeneratorOptions} from '~/typings/generator';
 
 /**
  * Handles configuration loading and generator creation for Posquelize.
@@ -40,10 +40,11 @@ export default class ConfigHandler {
 
   /**
    * Creates an instance of ConfigHandler.
-   * @param {string} configFile - The name of the configuration file.
+   * @param {string} configFile - The path to the configuration file.
+   * @param {GeneratorOptions} [options={}] - Optional generator options to merge with configuration.
    * @constructor
    */
-  constructor(public readonly configFile: string) {}
+  constructor(public readonly configFile: string, protected readonly options: GeneratorOptions = {}) {}
 
   /**
    * Loads the configuration file asynchronously.
@@ -54,7 +55,7 @@ export default class ConfigHandler {
   public async load(): Promise<boolean> {
     try {
       const module = await import(this.configFile);
-      this.config = module.default as GenerateConfigFile;
+      this.config = ConfigCombiner.withFileOptions(module.default as GenerateConfigFile, this.options);
     } catch (e: any) {
       console.error(`Failed to load configuration file: ${e.message}`);
       return false;
