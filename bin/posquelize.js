@@ -147,18 +147,16 @@ const argv = yargs(hideBin(process.argv))
     clean: false,
   })
   .showHelpOnFail(true, 'Use --help for usage')
-  .showHelp(printHeader)
   .help()
   .parse();
 
 function printHeader (...l) {
-  console.log(`░█████████                                                         ░██ ░██
-░██     ░██                                                        ░██
-░██     ░██  ░███████   ░███████   ░████████ ░██    ░██  ░███████  ░██ ░██░█████████  ░███████
-░█████████  ░██    ░██ ░██        ░██    ░██ ░██    ░██ ░██    ░██ ░██ ░██     ░███  ░██    ░██
-░██         ░██    ░██  ░███████  ░██    ░██ ░██    ░██ ░█████████ ░██ ░██   ░███    ░█████████
-░██         ░██    ░██        ░██ ░██   ░███ ░██   ░███ ░██        ░██ ░██ ░███      ░██
-░██          ░███████   ░███████   ░█████░██  ░█████░██  ░███████  ░██ ░██░█████████  ░███████\n`);
+  console.log(`\n\n██████╗  ██████╗ ███████╗ ██████╗ ██╗   ██╗███████╗██╗     ██╗███████╗███████╗
+██╔══██╗██╔═══██╗██╔════╝██╔═══██╗██║   ██║██╔════╝██║     ██║╚══███╔╝██╔════╝
+██████╔╝██║   ██║███████╗██║   ██║██║   ██║█████╗  ██║     ██║  ███╔╝ █████╗
+██╔═══╝ ██║   ██║╚════██║██║▄▄ ██║██║   ██║██╔══╝  ██║     ██║ ███╔╝  ██╔══╝
+██║     ╚██████╔╝███████║╚██████╔╝╚██████╔╝███████╗███████╗██║███████╗███████╗
+╚═╝      ╚═════╝ ╚══════╝ ╚══▀▀═╝  ╚═════╝ ╚══════╝╚══════╝╚═╝╚══════╝╚══════╝\n`);
 
   console.log(...l);
 }
@@ -213,6 +211,8 @@ function toSigularize (alias) {
  * Main execution function
  */
 (async function () {
+  printHeader();
+
   if (Object.hasOwn(argv, 'extract-templates')) {
     const destDir = path.normalize(process.cwd() + '/templates');
     const srcDir = path.normalize(__dirname + '/../lib/templates');
@@ -237,7 +237,7 @@ function toSigularize (alias) {
   }
 
   if (!argv['user'] || !argv['database'] || !argv['pass']) {
-    console.log(`Missing required flags: --user, --password  and --database.`);
+    console.error('Missing required arguments. Use --help for usage information.');
     process.exit(1);
   }
 
