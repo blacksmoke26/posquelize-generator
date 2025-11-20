@@ -8,6 +8,8 @@
  * repositories, and various output formatting preferences.
  */
 
+import CodeFile from '~/objects/CodeFile';
+
 /**
  * Configuration options for the generator
  */
@@ -338,6 +340,75 @@ export interface GeneratorOptions {
    * ```
    */
   dryRun?: boolean;
+
+  /**
+   * Controls the generation of a detailed HTML diff file showing side-by-side comparisons
+   * of what would be changed, instead of writing files to disk. When enabled alongside
+   * dryRun, this provides a comprehensive visual representation of all modifications
+   * that would be made to the existing files, including additions, deletions, and
+   * modifications.
+   *
+   * The generated HTML diff includes:
+   * - Side-by-side comparison of original and proposed changes
+   * - Color-coded highlighting of differences (additions in green, deletions in red)
+   * - Line-by-line diff visualization
+   * - File tree overview of all affected files
+   * - Summary statistics of total changes
+   *
+   * This feature is particularly useful for:
+   * - Reviewing large-scale changes before applying them
+   * - Code review processes in team environments
+   * - Documentation of changes for audit trails
+   * - Debugging complex generation scenarios
+   * - Presenting proposed changes to stakeholders
+   *
+   * The HTML diff file is generated in the root output directory with a timestamp
+   * in the filename (e.g., "diff_2025-01-15_14-30-25.html").
+   *
+   * @default false
+   * @example
+   * ```typescript
+   * // Enable HTML diff generation with preview
+   * { dryRun: true, dryRunDiff: true }
+   *
+   * // Normal operation without diff (default)
+   * { dryRun: false, dryRunDiff: false }
+   * ```
+   */
+  dryRunDiff?: boolean;
+
+  /**
+   * Callback function invoked before a generated file is saved to disk.
+   * This hook allows for custom validation, modification, or cancellation
+   * of file saves during the generation process.
+   *
+   * @param file - The CodeFile instance representing the file about to be saved
+   * @returns boolean - Return false to prevent the file from being saved,
+   *                   return true to allow the save operation to proceed
+   *
+   * @example
+   * ```typescript
+   * // Example usage to prevent saving certain files
+   * beforeFileSave: (file) => {
+   *   if (file.path.includes('temp') || file.content.length === 0) {
+   *     return false; // Skip saving this file
+   *   }
+   *   return true; // Allow save
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Example usage to modify file content before saving
+   * beforeFileSave: (file) => {
+   *   if (file.path.endsWith('.ts')) {
+   *     file.content = file.content.replace(/export/g, 'public export');
+   *   }
+   *   return true;
+   * }
+   * ```
+   */
+  beforeFileSave?(file: CodeFile): boolean;
 }
 
 /** Configuration file for generator  */
