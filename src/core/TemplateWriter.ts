@@ -47,6 +47,17 @@ export default class TemplateWriter {
   constructor(public readonly options: GeneratorOptions = {}) {
   }
 
+  public getTemplateFile (template: string): string {
+    const templateDir = this.options?.templatesDir ?? '';
+    let templateFile = FileHelper.join(templateDir, `${template}.njk`);
+
+    if ( !templateDir.trim() || !fs.existsSync(templateFile)) {
+      templateFile = FileHelper.join(FileHelper.dirname(__dirname, 1), 'templates', `${template}.njk`);
+    }
+
+    return templateFile;
+  }
+
   /**
    * Processes a Nunjucks template and persists the rendered output to disk.
    *
@@ -55,12 +66,7 @@ export default class TemplateWriter {
    * @param context - Data object passed to the template for variable substitution
    */
   public renderOut(template: string, outFile: string, context: Record<string, any> = {}): void {
-    const templateDir = this.options?.templatesDir ?? '';
-    let templateFile = FileHelper.join(templateDir, `${template}.njk`);
-
-    if ( !templateDir.trim() || !fs.existsSync(templateFile)) {
-      templateFile = FileHelper.join(FileHelper.dirname(__dirname, 1), 'templates', `${template}.njk`);
-    }
+    let templateFile = this.getTemplateFile(template);
 
     const text = NunjucksHelper.renderFile(templateFile, context, {
       autoescape: false,

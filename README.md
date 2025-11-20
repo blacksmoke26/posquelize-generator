@@ -49,6 +49,8 @@ Posquelize is a powerful CLI tool that automates the generation of Sequelize app
 - 🚀 **Programmatic API**: Full TypeScript API for integration into
   build pipelines and custom tools
 - 🧪 **Dry Run Mode**: Preview generation changes without modifying files with `--dry-run`
+- 🔄 **Dry Run Interactive Mode**: Generate detailed HTML comparison showing changes 
+  between existing and generated files with `--dry-run-diff`
 
 ## Quick Start
 
@@ -101,6 +103,7 @@ posquelize --help
 | 📋 `--no-null-type`            | Omit `null` in type declaration for nullable column                      | -     |
 | 🎨 `--extract-templates`       | Extract template files into the current directory for customization | -     |
 | 🧪 `--dry-run`         | Preview generation changes without modifying files | -     |
+| 🔄 `--dry-run-diff`       | Generate detailed HTML comparison showing changes between existing and generated files | -     |
 
 ## Usage Examples
 
@@ -126,6 +129,18 @@ posquelize -h localhost -u postgres -d myapp_db -x --tables users,posts,comments
 
 ```bash
 posquelize -h localhost -u postgres -d myapp_db -x -o ./my-sequelize-app --clean
+```
+
+### Dry Run Preview
+
+```bash
+posquelize -h localhost -u postgres -d myapp_db -x --dry-run
+```
+
+### Dry Run with HTML Diff
+
+```bash
+posquelize -h localhost -u postgres -d myapp_db -x --dry-run-diff
 ```
 
 ## Security Best Practices
@@ -256,6 +271,9 @@ module.exports = {
   
   // Preview of changes without actually writing files to disk.
   dryRun: true,
+  
+  // Interactive HTML comparison of changes without actually writing files to disk.
+  dryRunDiff: true,
 };
 ```
 

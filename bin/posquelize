@@ -10,7 +10,6 @@
 
 const path = require('node:path');
 const fs = require('node:fs');
-const figlet = require('figlet');
 const readline = require('readline');
 const yargs = require('yargs');
 const { hideBin } = require('yargs/helpers');
@@ -26,7 +25,7 @@ const argv = yargs(hideBin(process.argv))
     'parse-numbers': false // disabled because of password field, other option can still be explicitly defined as number type
   })
   .usage(
-    'Usage: posquelize -h <host> -d <database> -u <user> -x [password] -p [port] -o [/path/to/myapp] -t [tableName]'
+    'Usage: posquelize -h <host> -d <database> -u <user> -x -o [/path/to/myapp]'
   )
   .option('host', {
     description: 'IP/Hostname for the database.',
@@ -106,6 +105,10 @@ const argv = yargs(hideBin(process.argv))
     description: 'Preview changes in terminal instead of writing on the disk',
     type: 'boolean',
   })
+  .option('dry-run-diff', {
+    description: 'Generate or update a detailed HTML comparison file showing changes',
+    type: 'boolean',
+  })
   .default({
     host: 'localhost',
     port: 5432,
@@ -113,7 +116,22 @@ const argv = yargs(hideBin(process.argv))
     dirname: 'database',
     clean: false,
   })
+  .showHelpOnFail(true, 'Use --help for usage')
+  .showHelp(printHeader)
+  .help()
   .parse();
+
+function printHeader (...l) {
+  console.log(`░█████████                                                         ░██ ░██
+░██     ░██                                                        ░██
+░██     ░██  ░███████   ░███████   ░████████ ░██    ░██  ░███████  ░██ ░██░█████████  ░███████
+░█████████  ░██    ░██ ░██        ░██    ░██ ░██    ░██ ░██    ░██ ░██ ░██     ░███  ░██    ░██
+░██         ░██    ░██  ░███████  ░██    ░██ ░██    ░██ ░█████████ ░██ ░██   ░███    ░█████████
+░██         ░██    ░██        ░██ ░██   ░███ ░██   ░███ ░██        ░██ ░██ ░███      ░██
+░██          ░███████   ░███████   ░█████░██  ░█████░██  ░███████  ░██ ░██░█████████  ░███████\n`);
+
+  console.log(...l);
+}
 
 /**
  * Reads password from stdin without echoing the characters
@@ -137,8 +155,6 @@ async function readPassword () {
  * Main execution function
  */
 (async function () {
-  console.log(await figlet.text('Posquelize', { font: 'Slant' }) + `\n\n`);
-
   if (Object.hasOwn(argv, 'extract-templates')) {
     const destDir = path.normalize(process.cwd() + '/templates');
     const srcDir = path.normalize(__dirname + '/../lib/templates');
@@ -193,7 +209,12 @@ async function readPassword () {
       model: {},
     },
     dryRun: Object.hasOwn(argv, 'dry-run'),
+    dryRunDiff: Object.hasOwn(argv, 'dry-run-diff'),
   };
+
+  if (config.dryRunDiff) {
+    config.dryRun = true;
+  }
 
   if (Object.hasOwn(argv, 'no-diagram')) {
     config.diagram = false;

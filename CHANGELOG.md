@@ -6,11 +6,14 @@
 
 * Dry run mode ([PR-19](https://github.com/blacksmoke26/posquelize/pull/19))
 * Add support for CommonJS migration ([PR-18](https://github.com/blacksmoke26/posquelize/pull/18))
+* Add `--dry-run-diff` flag to generate HTML comparison file showing changes ([PR-21](https://github.com/blacksmoke26/posquelize/pull/21))
 
 ### enhancements
 
 * Replaced TypeScript Converter files with `@junaidatari/json2ts`
   dependency, New database scripts (multiple sample schemas). ([PR-20](https://github.com/blacksmoke26/posquelize/pull/20))
+* Remove `figlet` dependency and replace with custom ASCII art implementation 
+  in the CLI header display for improved performance and reduced package size ([PR-21](https://github.com/blacksmoke26/posquelize/pull/21))
 
 ## v0.0.2 - 2025-11-16
 

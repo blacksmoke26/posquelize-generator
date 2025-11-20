@@ -39,6 +39,9 @@ import ModelGenerator, {InitTemplateVars, ModelTemplateVars, sp} from './ModelGe
 import type {Knex} from 'knex';
 import type {ForeignKey, Relationship, TableIndex} from '~/typings/utils';
 import type {GeneratorOptions} from '~/typings/generator';
+import CodeFile from '~/objects/CodeFile';
+import MultiFileDiffViewer from '~/classes/MultiFileDiffViewer';
+import {FileComparison} from '~/typings/multi-diff';
 
 /**
  * Generates Sequelize models, migrations, and related files from a database schema.
@@ -91,6 +94,7 @@ export default class PosquelizeGenerator {
    */
   private modelGen: InstanceType<typeof ModelGenerator>;
   private writer: InstanceType<typeof TemplateWriter>;
+  private codeFiles: CodeFile[] = [];
 
   /**
    * Database metadata including schemas, indexes, relationships, and foreign keys.
@@ -222,6 +226,8 @@ export default class PosquelizeGenerator {
    * Creates all necessary subdirectories within the base directory.
    */
   private initDirs(): void {
+    if (this.options.dryRun) return;
+
     this.getBaseDir('base');
     this.getBaseDir('config');
     this.getBaseDir('typings');
@@ -566,6 +572,14 @@ export default class PosquelizeGenerator {
       }
     }
 
+    if (this.options.dryRunDiff) {
+      this.options.dryRun = true;
+      this.options.beforeFileSave = (file: CodeFile) => {
+        this.codeFiles.push(file);
+        return false;
+      };
+    }
+
     // Initialize directory structure
     this.initDirs();
 
@@ -608,12 +622,59 @@ export default class PosquelizeGenerator {
     // Write models initializer file
     const fileName = FileHelper.join(this.getBaseDir('models'), 'index.ts');
     this.writer.renderOut('models-initializer', fileName, initTplVars);
-    console.log('Models Initializer generated:', fileName);
+
+    if (!this.options.dryRun) {
+      console.log('Models Initializer generated:', fileName);
+    }
 
     await Promise.all([
       this.generateMigrations(),
       this.generateDiagram(),
     ]);
+
+    await this.generateDiffHtml();
+  }
+
+  private async generateDiffHtml(): Promise<void> {
+    if (!this.options.dryRunDiff) return;
+
+    const diffViewer = new MultiFileDiffViewer(
+      {
+        // Custom theme options with improved colors
+        primaryColor: '#586069',
+        accentColor: '#0969da',
+        successColor: '#2da44e',
+        dangerColor: '#d1242f',
+        warningColor: '#d29922',
+        lightBg: '#f6f8fa',
+        darkBg: '#0d1117f2',
+        fontSizeScale: 1.0,
+      },
+      {
+        // Advanced configuration
+        headerTitle: '⚡ Posquelize Diff Viewer',
+        footerText: 'Generated with ❤️ Posquelize',
+        showFileIcons: true,
+        showSummary: true,
+      },
+    );
+
+    const fileComparisons: FileComparison[] = this.codeFiles.map(x => ({
+      ...x.getComparison(),
+      newPath: x.getFilename(this.rootDir),
+      oldPath: '',
+    }) as FileComparison);
+
+    const template = this.writer.getTemplateFile('dry-run-interactive-diff')
+    const htmlOutput = diffViewer.writeFile(FileHelper.readFile(template), fileComparisons, {
+      outputFormat: 'side-by-side',
+      showFiles: true,
+      matching: 'words',
+      compactMode: false,
+      theme: 'light'
+    }, this.rootDir);
+
+    console.log('Diff file generated to: ' + htmlOutput);
   }
 
   /**

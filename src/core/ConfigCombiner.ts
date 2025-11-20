@@ -10,6 +10,9 @@
 
 import merge from 'deepmerge';
 
+// objects
+import CodeFile from '~/objects/CodeFile';
+
 // types
 import type {GenerateConfigFile, GeneratorOptions} from '~/typings/generator';
 
@@ -71,7 +74,11 @@ export default abstract class ConfigCombiner {
           enums: [],
         },
         dryRun: false,
+        dryRunDiff: false,
         templatesDir: '',
+        beforeFileSave(_file: CodeFile): boolean {
+          return true;
+        },
       },
       ...options,
     );
@@ -92,35 +99,6 @@ export default abstract class ConfigCombiner {
         port: 5432,
       },
       outputDir: '',
-      schemas: [],
-      tables: [],
-      dirname: 'database',
-      cleanRootDir: false,
-      diagram: true,
-      migrations: {
-        indexes: true,
-        seeders: true,
-        functions: true,
-        domains: true,
-        composites: true,
-        tables: true,
-        views: true,
-        triggers: true,
-        foreignKeys: true,
-      },
-      repositories: true,
-      generator: {
-        model: {
-          replaceEnumsWithTypes: false,
-          addNullTypeForNullable: true,
-        },
-        migration: {
-          useCommonJs: false,
-        },
-        enums: [],
-      },
-      dryRun: false,
-      templatesDir: '',
-    }, ...options);
+    }, this.withOptions(), ...options);
   }
 }
