@@ -67,6 +67,12 @@ export default abstract class ConfigCombiner {
           model: {
             addNullTypeForNullable: true,
             replaceEnumsWithTypes: false,
+            naming: {
+              model: 'pascal',
+              file: 'pascal',
+              property: 'camel',
+              singularizeModel: 'singular',
+            },
           },
           migration: {
             useCommonJs: false,

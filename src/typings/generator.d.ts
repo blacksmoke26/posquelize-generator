@@ -8,7 +8,90 @@
  * repositories, and various output formatting preferences.
  */
 
+// objects
 import CodeFile from '~/objects/CodeFile';
+
+/**
+ * Supported case naming conventions for transforming strings.
+ * - camel: camelCase (first letter lowercase, subsequent words capitalized)
+ * - lower_snake: snake_case (all lowercase with underscores)
+ * - original: unchanged case (preserves original casing)
+ * - pascal: PascalCase (first letter and subsequent words capitalized)
+ * - upper_snake: UPPER_SNAKE_CASE (all uppercase with underscores)
+ */
+export type CaseType = 'camel' | 'lower_snake' | 'original' | 'pascal' | 'upper_snake';
+
+/**
+ * Supported case naming conventions for file names.
+ * Extends CaseType with the additional kebab-case option.
+ * - kebab: kebab-case (all lowercase with hyphens)
+ */
+export type FileCaseType = CaseType | 'kebab';
+
+/**
+ * Options for controlling model name singularization/pluralization behavior.
+ * Determines how database table names are transformed into TypeScript model class names.
+ *
+ * - 'singular': Converts plural table names to singular (e.g., 'users' → 'User')
+ * - 'plural': Preserves plural form in model names (e.g., 'users' → 'Users')
+ * - 'original': Uses table name as-is without transformation (e.g., 'users' → 'users')
+ *
+ * @default 'singular'
+ */
+export type SingularizeModel = 'singular' | 'plural' | 'original';
+
+/**
+ * Configuration options for naming conventions used in code generation.
+ * Controls how models, properties, and files are named to match
+ * specific project coding standards and preferences.
+ */
+export type ModelNamingOptions = {
+  /**
+   * The naming convention for generated model class names.
+   * Controls the case transformation applied to model identifiers.
+   * @default 'pascal'
+   */
+  model?: CaseType;
+  /**
+   * The naming convention for generated property names within models.
+   * Controls the case transformation applied to class properties.
+   * @default 'camel'
+   */
+  property?: CaseType;
+  /**
+   * The naming convention for generated file names.
+   * Controls the case transformation applied to output file names.
+   * @default 'pascal'
+   */
+  file?: FileCaseType;
+  /**
+   * Controls whether model and file names should be singularized when generated
+   * from plural table names. This option affects the naming convention for both
+   * the TypeScript model class names and their corresponding file names.
+   *
+   * When set to 'singular', table names in plural form (e.g., 'users', 'orders')
+   * will be converted to singular form for the model (e.g., 'User', 'Order').
+   * This follows common ORM conventions where a model represents a single entity.
+   *
+   * When set to 'plural', the original plural table names are preserved in the
+   * model class names (e.g., 'Users', 'Orders'). This can be useful when working
+   * with APIs or systems that consistently use plural naming.
+   *
+   * When set to 'original', the table names are used as-is without any singular
+   * or plural transformation, preserving the exact database table naming.
+   *
+   * This option works in conjunction with the 'model' and 'file' naming convention
+   * settings to determine the final output names.
+   *
+   * @default 'singular'
+   * @example
+   * // For table name 'users'
+   * singularizeModel: 'singular'  // Generates: class User, file User.ts
+   * singularizeModel: 'plural'    // Generates: class Users, file Users.ts
+   * singularizeModel: 'original'  // Generates: class users, file users.ts
+   */
+  singularizeModel?: SingularizeModel;
+}
 
 /**
  * Configuration options for the generator
@@ -96,6 +179,12 @@ export interface GeneratorOptions {
        * ```
        */
       replaceEnumsWithTypes?: boolean;
+      /**
+       * Configuration options for naming conventions used in code generation.
+       * Controls how models, properties, and files are named to match
+       * specific project coding standards and preferences.
+       */
+      naming?: ModelNamingOptions;
     },
     /**
      * Configuration for handling database enums during model generation.
