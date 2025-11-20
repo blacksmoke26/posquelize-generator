@@ -179,6 +179,14 @@ export default class PosquelizeGenerator {
     public rootDir: string,
     public options: GeneratorOptions = {},
   ) {
+    if (this.getOptions().dryRunDiff) {
+      this.options.dryRun = true;
+      this.options.beforeFileSave = (file: CodeFile) => {
+        this.codeFiles.push(file);
+        return false;
+      };
+    }
+
     this.knex = KnexClient.create(this.connectionString);
     this.modelGen = new ModelGenerator(this.getOptions());
     this.writer = new TemplateWriter(this.getOptions());
@@ -617,14 +625,6 @@ export default class PosquelizeGenerator {
       } catch {
         console.error('Error: Unable to remove the app directory due to used by another process');
       }
-    }
-
-    if (this.options.dryRunDiff) {
-      this.options.dryRun = true;
-      this.options.beforeFileSave = (file: CodeFile) => {
-        this.codeFiles.push(file);
-        return false;
-      };
     }
 
     // Initialize directory structure
