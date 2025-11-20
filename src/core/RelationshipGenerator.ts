@@ -512,8 +512,8 @@ export default class RelationshipGenerator {
       this.formatter.getModelName(target.table),
       alias,
       this.formatter.getModelName(junction.table as string),
-      this.formatter.getModelName(source.table) + this.formatter.getPropertyName(source.column),
-      this.formatter.getModelName(target.table) + this.formatter.getPropertyName(source.column),
+      this.formatter.getPropertyName(this.formatter.getModelName(source.table) + '_' + source.column),
+      this.formatter.getPropertyName(this.formatter.getModelName(target.table) + '_' + source.column),
     );
   }
 
