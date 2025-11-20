@@ -13,6 +13,7 @@ import FileHelper from '~/helpers/FileHelper';
 
 // types
 import type {GeneratorOptions} from '~/typings/generator';
+import type {FileComparison} from '~/typings/multi-diff';
 
 /**
  * Represents a code file with a filename, content, and optional generation options.
@@ -29,17 +30,49 @@ export default class CodeFile {
   }
 
   /**
-   * Reads the existing file content if it exists, otherwise returns the current content.
-   * @returns The file content as a string.
+   * Gets a comparison object containing the old and new content paths and content.
+   * @returns An object containing file comparison data.
    */
-  public readExistingFile(): string {
-    return fs.existsSync(this.filename)
-      ? fs.readFileSync(this.filename, {encoding: 'utf-8'})
-      : this.content;
+  public getComparison(): Readonly<FileComparison> {
+    return {
+      newContent: this.getNewContent(),
+      oldContent: this.getOldContent(),
+      newPath: this.getFilename(),
+      oldPath: this.getFilename(),
+    };
   }
 
   /**
-   * Draws a formatted table and displays the given text content.
+   * Retrieves the original content of the file if it exists on disk.
+   * If the file doesn't exist, returns the provided default content.
+   * @param defaultContent - The content to return if the file doesn't exist (defaults to empty string).
+   * @returns The file's original content as a string, or the default content if the file doesn't exist.
+   */
+  public getOldContent(defaultContent: string = ''): string {
+    return fs.existsSync(this.filename)
+      ? fs.readFileSync(this.filename, {encoding: 'utf-8'})
+      : defaultContent;
+  }
+
+  /**
+   * Retrieves the new/current content that would be written to the file.
+   * @returns The new content as a string.
+   */
+  public getNewContent(): string {
+    return this.content;
+  }
+
+  /**
+   * Retrieves the filename associated with this CodeFile instance.
+   * @returns The filename as a string.
+   */
+  public getFilename(rootDir: string | null = null): string {
+    return rootDir ? this.filename.replace(rootDir, '') : this.filename;
+  }
+
+  /**
+   * Draws a formatted table around the given text content.
+   * The table adjusts its width based on the longest line in the text.
    * @param text - The text content to display within the table.
    */
   public drawTable(text: string): void {
@@ -67,7 +100,7 @@ export default class CodeFile {
    * Outputs the diff to the console with a formatted header showing the filename.
    */
   public diff(): void {
-    const changes = diffChars(this.readExistingFile(), this.content);
+    const changes = diffChars(this.getOldContent(), this.content);
 
     this.drawTable('File: ' + this.filename);
 
@@ -93,8 +126,16 @@ export default class CodeFile {
   /**
    * Saves the file to disk or displays a diff if dry-run mode is enabled.
    * In dry-run mode, it calls the diff() method instead of saving.
+   * @returns void
    */
   public save(): void {
+    if (typeof this.options.beforeFileSave === 'function') {
+      const result = this.options.beforeFileSave(this);
+      if (!result) return;
+    }
+
+    if (this.options?.dryRunDiff) return;
+
     if (this.options?.dryRun) {
       this.diff();
       return;
