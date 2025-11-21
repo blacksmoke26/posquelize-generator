@@ -106,8 +106,8 @@ posquelize --help
 | 🧪 `--dr, --dry-run`         | Preview generation changes without modifying files | -     |
 | 🔄 `--drd, --dry-run-diff`       | Generate detailed HTML comparison showing changes between existing and generated files | -     |
 | 📝 `--cm, --case-model <type>`         | Set case of model names (`c`=camelCase, `l`=lowercase, `o`=original, `p`=PascalCase, `u`=UPPER_CASE) | `p` |
-| 🏷️ `--cp, --case-property <type>`      | Set case of property names (`c`=camelCase, l=lowercase, `o`=original, `p`=PascalCase, `u`=UPPER_CASE) | `c` |
-| 📁 `--cf, --case-file <type>`           | Set case of file names (`c`=camelCase, l=lowercase, `o`=original, `p`=PascalCase, `u`=UPPER_CASE, `k`=kebab-case) | `p` |
+| 🏷️ `--cp, --case-property <type>`      | Set case of property names (`c`=camelCase, `l`=lowercase, `o`=original, `p`=PascalCase, `u`=UPPER_CASE) | `c` |
+| 📁 `--cf, --case-file <type>`           | Set case of file names (`c`=camelCase, `l`=lowercase, `o`=original, `p`=PascalCase, `u`=UPPER_CASE, `k`=kebab-case) | `p` |
 | 🔤 `--sm, --singularize-model <type>`   | Set singularize model names (`s`=singularize, `p`=pluralize, `o`=original) | `s` |
 
 ## Usage Examples
@@ -178,8 +178,8 @@ posquelize -h localhost -u postgres -d myapp_db -x --cm c --cp c --cf k --sm s -
 # Enterprise naming convention (PascalCase models, camelCase properties, PascalCase files)
 posquelize -h localhost -u postgres -d myapp_db -x --cm p --cp c --cf p --sm s --clean
 
-# Database-first approach (preserve all original cases and names)
-posquelize -h localhost -u postgres -d myapp_db -x --cm o --cp o --cf o --sm o
+# Database-first approach (preserve all original cases and names) with dry-run mode
+posquelize -h localhost -u postgres -d myapp_db -x --cm o --cp o --cf o --sm o --dry-run
 ```
 
 ### Configuration File Examples
@@ -189,6 +189,9 @@ posquelize -h localhost -u postgres -d myapp_db -x --cm o --cp o --cf o --sm o
 ```bash
 # Create a basic config file and use it
 posquelize --use-config
+
+# Override the config options with the predefined flags (-* or --*)
+posquelize --use-config --dry-run-diff
 
 # The command will create posquelize.config.js if it doesn't exist
 # You can then edit the file with your settings
@@ -318,11 +321,26 @@ module.exports = {
        * Determines whether migration files should be generated using CommonJS module
        * syntax instead of ECMAScript modules (ESM)
        */
-      useCommonJs: false,
+      useCommonJs: true,
     },
     model: {
       addNullTypeForNullable: true, // Controls whether nullable typed property
       replaceEnumsWithTypes: false, // Replace enum with String Union types
+      /**
+       * Configuration options for naming conventions used in code generation.
+       * Controls how models, properties, and files are named to match
+       * specific project coding standards and preferences.
+       */
+      naming: {
+        // Naming convention for model names
+        model: 'pascal',
+        // Naming convention for property names
+        property: 'camel',
+        // Naming convention for file names
+        file: 'pascal',
+        // Model singularization
+        singularizeModel: 'singular',
+      },
     },
     // Configurable enums for table columns, (generate enums instead of plain value)
     enums: [{
